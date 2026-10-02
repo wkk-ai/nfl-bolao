@@ -32,7 +32,7 @@ export default function HomePage() {
     <div className="space-y-6">
       {demo ? (
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
-          Both chairs started at 100 after missing the early weeks. Those games don’t move the score. New picks stack on 100. Until a Supabase project is wired, cards stay on this device.
+          Both chairs started at 100 after missing the early weeks. Those games don’t move the score. New picks stack on 100. Cards on this copy stay on this device until the shared board is wired.
         </p>
       ) : null}
 

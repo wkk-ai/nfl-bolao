@@ -17,7 +17,7 @@ Every push to `main` publishes that page (GitHub Pages, static export). You can 
 
 To preview the same static files GitHub Pages serves: `npm run build` then `npm start`, and open http://127.0.0.1:43147/nfl-bolao/
 
-The app loads the 2026 ESPN regular-season slate (weeks 1–18). Will and Sara both start at 100 because they missed the early weeks. Missed weeks do not move the score. If you do not add a Supabase project, new picks live in this browser only and a **Demo data** tag shows.
+The app loads the 2026 ESPN regular-season slate (weeks 1–18). Will and Sara both start at 100 because they missed the early weeks. Missed weeks do not move the score. The live site uses a shared board, so a pick made as Will shows for Sara on another phone. Local copies without env keys stay on this browser and show a **Demo data** tag.
 
 ## Scoring (also on the Rules page)
 
@@ -29,14 +29,16 @@ The app loads the 2026 ESPN regular-season slate (weeks 1–18). Will and Sara b
 
 Buckets: **5** = win by 1–7, **10** = 8–12, **15** = 13–17, **20** = 18+. Games lock at kickoff.
 
-## Optional: Supabase
+## Shared board (Supabase)
 
-Copy `.env.example` to `.env.local` and fill:
+The GitHub Pages build reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from repository secrets. `SUPABASE_ANON_KEY` is the browser publishable key. The built site may include that key. It must not include the database password.
+
+For a local shared copy, put the same two values in `.env.local` as:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-Run `supabase/migrations/0001_init.sql` in the Supabase SQL editor. Tables: players, weeks, games, picks, results, reactions.
+Apply `supabase/migrations/*.sql`, then `python3 scripts/seed-supabase.py` with a Postgres env (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `sslmode=require`). That loads Will and Sara, the full 2026 slate, and the real scores. It does not invent missed-week picks.
 
 ## Keep a free Supabase project awake
 

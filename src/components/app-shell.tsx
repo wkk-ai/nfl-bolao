@@ -18,7 +18,7 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { activePlayer, setActivePlayer, demo, ready } = useStore();
+  const { activePlayer, setActivePlayer, demo, ready, error } = useStore();
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-[var(--turf)] text-zinc-100">
@@ -79,6 +79,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="relative mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-5 pb-28 sm:px-4 md:pb-10">
+        {error ? (
+          <p className="mb-4 rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-100">
+            {error}
+          </p>
+        ) : null}
         {children}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/90 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
