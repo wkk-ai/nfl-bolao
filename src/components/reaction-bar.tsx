@@ -22,9 +22,9 @@ export function ReactionBar({ weekId, from }: { weekId: number; from: PlayerId }
   return (
     <div className="rounded-xl border border-white/10 bg-black/40 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-heading text-amber-200">Needling</h3>
+        <h3 className="font-medium text-amber-200">Needling</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button size="sm" variant="outline" />}>
+          <DialogTrigger render={<Button size="sm" variant="outline" className="min-h-11" />}>
             Custom jab
           </DialogTrigger>
           <DialogContent className="border-white/10 bg-zinc-950">
@@ -51,7 +51,13 @@ export function ReactionBar({ weekId, from }: { weekId: number; from: PlayerId }
       </div>
       <div className="flex flex-wrap gap-2">
         {CHIPS.map((c) => (
-          <Button key={c.body} size="sm" variant="secondary" onClick={() => addReaction(weekId, c.emoji, c.body)}>
+          <Button
+            key={c.body}
+            size="sm"
+            variant="secondary"
+            className="min-h-11"
+            onClick={() => addReaction(weekId, c.emoji, c.body)}
+          >
             {c.emoji} {c.body}
           </Button>
         ))}

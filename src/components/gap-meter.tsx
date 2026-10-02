@@ -12,7 +12,7 @@ export function GapMeter({ ranks }: { ranks: RankRow[] }) {
   const leader = will.pts === sara.pts ? null : will.pts > sara.pts ? "Will" : "Sara";
   return (
     <Card className="border-white/10 bg-black/40 p-4">
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-amber-200">Will {will.pts}</span>
         <span className="text-zinc-400">
           {leader ? `${leader} by ${gap}` : "Tied. Split the pot energy."}

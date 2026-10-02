@@ -19,7 +19,7 @@ export function SeasonChart({ weeks, picks }: { weeks: SeedWeek[]; picks: PickRe
   }, []);
   return (
     <Card className="border-white/10 bg-black/40 p-4">
-      <h3 className="mb-3 font-heading text-amber-200">Season climb</h3>
+      <h3 className="mb-3 font-medium text-amber-200">Season climb</h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>

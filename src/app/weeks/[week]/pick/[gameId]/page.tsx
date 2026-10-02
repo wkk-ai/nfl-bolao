@@ -48,7 +48,7 @@ export default function PickPage({
   if (locked) {
     return (
       <div className="space-y-4">
-        <h1 className="font-heading text-3xl text-amber-200">This one’s locked</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">This one’s locked</h1>
         <p className="text-zinc-400">
           Kickoff was {formatKickoff(game.kickoff)}. You cannot change a pick after the ball is in the air.
         </p>
@@ -60,10 +60,10 @@ export default function PickPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+        <p className="text-xs font-medium text-zinc-500">
           Step {step} of 2 · locks {formatKickoff(game.kickoff)}
         </p>
-        <h1 className="font-heading text-4xl text-amber-200">Make the call</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Make the call</h1>
         <p className="text-zinc-400">First the winner. Then how ugly you think the score gets.</p>
       </div>
       <div className="flex items-center justify-center gap-6">
@@ -81,7 +81,7 @@ export default function PickPage({
               type="button"
               onClick={() => setWinner(t.abbr)}
               className={cn(
-                "rounded-xl border p-4 text-left transition",
+                "min-h-16 touch-manipulation rounded-xl border p-4 text-left transition",
                 on ? "border-amber-300 bg-amber-300/10" : "border-white/10 bg-black/40",
               )}
               style={{ boxShadow: on ? `inset 0 0 0 1px ${meta.primary}` : undefined }}
@@ -90,7 +90,7 @@ export default function PickPage({
                 <TeamLogo abbr={t.abbr} size={48} />
                 <div>
                   <div className="text-xs text-zinc-500">{t.side}</div>
-                  <div className="font-heading text-2xl">{t.abbr}</div>
+                  <div className="text-xl font-medium">{t.abbr}</div>
                   <div className="text-sm text-zinc-400">{t.name}</div>
                 </div>
               </div>
@@ -100,12 +100,12 @@ export default function PickPage({
       </div>
       {winner ? (
         <div className="space-y-3">
-          <h2 className="font-heading text-2xl">Winning margin</h2>
+          <h2 className="text-xl font-medium">Winning margin</h2>
           <p className="text-sm text-zinc-400">
             These are buckets, not exact scores. 5 = {bucketRange(5)}. 10 = {bucketRange(10)}. 15 ={" "}
             {bucketRange(15)}. 20 = {bucketRange(20)}.
           </p>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {MARGIN_BUCKETS.map((b) => {
               const copy = bucketCopy(b);
               const on = bucket === b;
@@ -115,12 +115,12 @@ export default function PickPage({
                   type="button"
                   onClick={() => setBucket(b)}
                   className={cn(
-                    "rounded-xl border p-4 text-left",
+                    "min-h-20 touch-manipulation rounded-xl border p-4 text-left",
                     on ? "border-amber-300 bg-amber-300/10" : "border-white/10 bg-black/40",
                     b === 20 && "ring-1 ring-red-400/30",
                   )}
                 >
-                  <div className="font-heading text-3xl">{b}</div>
+                  <div className="text-2xl font-medium">{b}</div>
                   <div className="text-sm text-amber-200">{copy.title}</div>
                   <div className="text-xs text-zinc-400">{bucketRange(b)}</div>
                   <p className="mt-2 text-sm text-zinc-300">{copy.risk}</p>
@@ -134,10 +134,10 @@ export default function PickPage({
           Choose a winner to unlock the margin buckets.
         </Card>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           disabled={!winner || !bucket}
-          className="bg-amber-400 text-black hover:bg-amber-300"
+          className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto"
           onClick={() => {
             if (!winner || !bucket) return;
             saveDraft(game.id, weekId, winner, bucket);
@@ -146,7 +146,7 @@ export default function PickPage({
         >
           Save to card
         </Button>
-        <ButtonLink href={`/weeks/${weekId}`} variant="ghost">
+        <ButtonLink href={`/weeks/${weekId}`} variant="ghost" className="h-12 min-h-12 w-full sm:w-auto">
           Cancel
         </ButtonLink>
       </div>

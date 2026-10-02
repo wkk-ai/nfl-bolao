@@ -14,8 +14,8 @@ export default function WeeksPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">2026 season</p>
-        <h1 className="font-heading text-4xl text-amber-200">Weeks</h1>
+        <p className="text-xs font-medium text-zinc-500">2026 season</p>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Weeks</h1>
         <p className="text-zinc-400">Open weeks take picks. Final weeks keep the receipts.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -23,10 +23,10 @@ export default function WeeksPage() {
           const state = deriveWeekState(week);
           const pts = weekPoints(week, picks, activePlayer);
           return (
-            <Link key={week.id} href={`/weeks/${week.id}`}>
+            <Link key={week.id} href={`/weeks/${week.id}`} className="block min-h-14">
               <Card className="border-white/10 bg-black/40 p-4 transition hover:border-amber-400/40">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-2xl">{week.label}</h2>
+                  <h2 className="text-xl font-medium">{week.label}</h2>
                   <Badge className="bg-white/10">{weekStateLabel(state)}</Badge>
                 </div>
                 <p className="mt-2 text-sm text-zinc-400">

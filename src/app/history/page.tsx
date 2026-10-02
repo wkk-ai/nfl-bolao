@@ -14,7 +14,7 @@ export default function HistoryPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-heading text-4xl text-amber-200">History</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">History</h1>
         <p className="text-zinc-400">Finished (and partly finished) weeks. The receipts live here.</p>
       </div>
       <div className="space-y-3">
@@ -26,7 +26,7 @@ export default function HistoryPage() {
             <Card key={w.id} className="border-white/10 bg-black/40 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <div className="font-heading text-2xl">{w.label}</div>
+                  <div className="text-xl font-medium">{w.label}</div>
                   <div className="text-xs text-zinc-500">{weekStateLabel(deriveWeekState(w))}</div>
                 </div>
                 <div className="text-sm">

@@ -24,19 +24,19 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{weekStateLabel(state)}</p>
-          <h1 className="font-heading text-4xl text-amber-200">{week.label} matchups</h1>
+          <p className="text-xs font-medium text-zinc-500">{weekStateLabel(state)}</p>
+          <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} matchups</h1>
           <p className="text-zinc-400">
             Pick the winner, then how far they win. Lock hits at kickoff, not at your bedtime.
           </p>
         </div>
-        <div className="flex gap-2">
-          <ButtonLink href={`/weeks/${weekId}/review`} variant="secondary">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <ButtonLink href={`/weeks/${weekId}/review`} variant="secondary" className="w-full sm:w-auto">
             Review card
           </ButtonLink>
-          <ButtonLink href={`/weeks/${weekId}/results`} variant="outline">
+          <ButtonLink href={`/weeks/${weekId}/results`} variant="outline" className="w-full sm:w-auto">
             Reveal
           </ButtonLink>
         </div>

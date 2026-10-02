@@ -32,7 +32,7 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-heading text-4xl text-amber-200">Review {week.label}</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Review {week.label}</h1>
         <p className="text-zinc-400">
           Check every line before you lock it in. Drafts stay drafts until you submit.
         </p>
@@ -46,24 +46,31 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
       )}
       <div className="space-y-2">
         {rows.map(({ game, pick, locked }) => (
-          <Card key={game.id} className="flex items-center gap-3 border-white/10 bg-black/40 p-3">
-            <TeamLogo abbr={game.awayAbbr} size={32} />
-            <span className="text-xs text-zinc-500">@</span>
-            <TeamLogo abbr={game.homeAbbr} size={32} />
-            <div className="min-w-0 flex-1 text-sm">
-              <div>
-                {game.awayAbbr} at {game.homeAbbr}
-              </div>
-              <div className="text-zinc-400">
-                {pick
-                  ? `${pick.winnerAbbr} · ${bucketRange(pick.marginBucket)}${pick.draft ? " · draft" : " · in"}`
-                  : locked
-                    ? "Missed — locked with no pick"
-                    : "No pick yet"}
+          <Card key={game.id} className="flex flex-col gap-3 border-white/10 bg-black/40 p-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-center gap-3">
+              <TeamLogo abbr={game.awayAbbr} size={32} />
+              <span className="text-xs text-zinc-500">@</span>
+              <TeamLogo abbr={game.homeAbbr} size={32} />
+              <div className="min-w-0 flex-1 text-sm">
+                <div>
+                  {game.awayAbbr} at {game.homeAbbr}
+                </div>
+                <div className="text-zinc-400">
+                  {pick
+                    ? `${pick.winnerAbbr} · ${bucketRange(pick.marginBucket)}${pick.draft ? " · draft" : " · in"}`
+                    : locked
+                      ? "Missed — locked with no pick"
+                      : "No pick yet"}
+                </div>
               </div>
             </div>
             {!locked ? (
-              <ButtonLink href={`/weeks/${weekId}/pick/${game.id}`} size="sm" variant="outline">
+              <ButtonLink
+                href={`/weeks/${weekId}/pick/${game.id}`}
+                size="sm"
+                variant="outline"
+                className="w-full sm:ml-auto sm:w-auto"
+              >
                 Edit
               </ButtonLink>
             ) : null}
@@ -71,7 +78,8 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
         ))}
       </div>
       <Button
-        className="bg-amber-400 text-black hover:bg-amber-300"
+        className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto"
+
         onClick={() => {
           submitWeek(weekId);
           toast.success("Card submitted. Kickoff still owns the lock.");

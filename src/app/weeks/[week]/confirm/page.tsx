@@ -21,8 +21,8 @@ export default function ConfirmPage({ params }: { params: Promise<{ week: string
 
   return (
     <div className="space-y-5">
-      <p className="text-xs uppercase tracking-[0.2em] text-emerald-400">Locked in</p>
-      <h1 className="font-heading text-4xl text-amber-200">{name}, the card is in.</h1>
+      <p className="text-xs font-medium text-emerald-400">Locked in</p>
+      <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{name}, the card is in.</h1>
       <p className="text-zinc-300">
         {yours.length} pick{yours.length === 1 ? "" : "s"} on {week.label}. Anything still open can be edited until that
         game’s kickoff. After that, we wait for the scoreboard.

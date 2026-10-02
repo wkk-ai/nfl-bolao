@@ -26,7 +26,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
   if (finals.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="font-heading text-4xl text-amber-200">{week.label} reveal</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} reveal</h1>
         <EmptyState
           title="No finals yet"
           body="Thursday’s game is in. The rest of this week is still upcoming. Come back after kickoffs."
@@ -39,8 +39,8 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Weekly reveal</p>
-        <h1 className="font-heading text-4xl text-amber-200">{week.label} is on the board</h1>
+        <p className="text-xs font-medium text-zinc-500">Weekly reveal</p>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} is on the board</h1>
         <p className="text-zinc-300">
           Will {will.total} pts · Sara {sara.total} pts
           {will.bonus || sara.bonus ? " · perfect-week bonus is in the total" : ""}
@@ -48,7 +48,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
       </div>
       {will.bonus || sara.bonus ? (
         <Card className="border-amber-300/40 bg-amber-300/10 p-4 text-center">
-          <p className="font-heading text-3xl text-amber-200">Perfect week</p>
+          <p className="text-2xl font-medium text-amber-200">Perfect week</p>
           <p className="text-zinc-200">
             {will.bonus ? "Will hit every winner. " : ""}
             {sara.bonus ? "Sara hit every winner." : ""}
@@ -74,7 +74,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                 <div className="text-right text-sm">
                   {game.status === "final" ? (
                     <>
-                      <div className="font-semibold">
+                      <div className="font-medium">
                         {game.awayScore}–{game.homeScore}
                       </div>
                       <div className="text-zinc-400">

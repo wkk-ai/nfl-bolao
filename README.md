@@ -4,12 +4,18 @@ A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a win
 
 This is not a money site. It is the house board for one bolão.
 
-## How to run it
+**Live site:** https://wkk-ai.github.io/nfl-bolao/
+
+Every push to `main` publishes that page (GitHub Pages, static export). You can also run a copy by hand from the Actions tab.
+
+## How to run it locally
 
 1. Install Node.js 20+.
 2. In this folder: `npm install`
 3. `npm run dev`
-4. Open http://127.0.0.1:43147
+4. Open http://127.0.0.1:43147/nfl-bolao/
+
+The `/nfl-bolao` prefix matches the live GitHub Pages address.
 
 The app loads the 2026 ESPN week slate (weeks 1–5). If you do not add a Supabase project, picks live in this browser only and a **Demo data** tag shows. That is enough to use every page.
 
@@ -41,7 +47,7 @@ Add these two **repository secrets** (GitHub → Settings → Secrets):
 - `SUPABASE_URL` — the same project URL
 - `SUPABASE_ANON_KEY` — the same anon key
 
-A tiny health check also lives at `/api/health`.
+A static note lives at `/nfl-bolao/health/`. That is not a live database check.
 
 ## What is in the app
 

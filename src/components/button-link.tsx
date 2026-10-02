@@ -17,7 +17,10 @@ export function ButtonLink({
   className?: string;
 } & VariantProps<typeof buttonVariants>) {
   return (
-    <Link href={href} className={cn(buttonVariants({ variant, size, className }))}>
+    <Link
+      href={href}
+      className={cn(buttonVariants({ variant, size }), "min-h-11 px-4 touch-manipulation", className)}
+    >
       {children}
     </Link>
   );

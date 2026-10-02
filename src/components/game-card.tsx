@@ -28,7 +28,10 @@ export function GameCard({
       className="overflow-hidden border-white/10 bg-black/40"
       style={{ borderLeft: `4px solid ${home.primary}` }}
     >
-      <Link href={game.locked ? `/weeks/${weekId}/results` : `/weeks/${weekId}/pick/${game.id}`} className="block p-4">
+      <Link
+        href={game.locked ? `/weeks/${weekId}/results` : `/weeks/${weekId}/pick/${game.id}`}
+        className="block min-h-14 p-4 touch-manipulation"
+      >
         <div className="flex items-center justify-between text-xs text-zinc-400">
           <span>{formatKickoffShort(game.kickoff)}</span>
           <Badge variant="secondary" className="bg-white/5 text-zinc-300">
@@ -36,14 +39,14 @@ export function GameCard({
           </Badge>
         </div>
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <div className="flex items-center gap-2">
-            <TeamLogo abbr={game.awayAbbr} />
-            <div>
+          <div className="flex min-w-0 items-center gap-2">
+            <TeamLogo abbr={game.awayAbbr} className="shrink-0" />
+            <div className="min-w-0">
               <div className="font-medium">{game.awayAbbr}</div>
-              <div className="text-xs text-zinc-500">{game.awayName}</div>
+              <div className="truncate text-xs text-zinc-500">{game.awayName}</div>
             </div>
           </div>
-          <div className="text-center text-lg font-semibold tabular-nums">
+          <div className="px-1 text-center text-lg font-medium tabular-nums">
             {game.status === "final" ? (
               <span>
                 {game.awayScore}–{game.homeScore}
@@ -52,12 +55,12 @@ export function GameCard({
               <span className="text-zinc-500">@</span>
             )}
           </div>
-          <div className="flex items-center justify-end gap-2 text-right">
-            <div>
+          <div className="flex min-w-0 items-center justify-end gap-2 text-right">
+            <div className="min-w-0">
               <div className="font-medium">{game.homeAbbr}</div>
-              <div className="text-xs text-zinc-500">{game.homeName}</div>
+              <div className="truncate text-xs text-zinc-500">{game.homeName}</div>
             </div>
-            <TeamLogo abbr={game.homeAbbr} />
+            <TeamLogo abbr={game.homeAbbr} className="shrink-0" />
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">

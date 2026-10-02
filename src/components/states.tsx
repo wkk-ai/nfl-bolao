@@ -14,7 +14,7 @@ export function PageLoading({ label = "Loading the slate…" }: { label?: string
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-xl border border-dashed border-white/15 bg-black/30 px-5 py-10 text-center">
-      <h2 className="font-heading text-xl text-amber-200">{title}</h2>
+      <h2 className="text-xl font-medium text-amber-200">{title}</h2>
       <p className="mt-2 text-sm text-zinc-400">{body}</p>
     </div>
   );

@@ -17,7 +17,7 @@ export default function LeaderboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-heading text-4xl text-amber-200">Season board</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Season board</h1>
         <p className="text-zinc-400">
           {ranks[0].tied
             ? "Will and Sara are dead even. The next Sunday breaks the tie — or doesn’t."
@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
               <div className="text-xs text-zinc-500">
                 {r.tied ? "T-1" : `#${r.rank}`}
               </div>
-              <div className="font-heading text-4xl">{r.name}</div>
+              <div className="text-2xl font-medium sm:text-3xl">{r.name}</div>
               <div className="text-2xl text-amber-200">{r.pts} pts</div>
               <div className="text-sm text-zinc-400">
                 Winner streak {winnerStreak(weeks, picks, r.playerId)}
@@ -47,7 +47,21 @@ export default function LeaderboardPage() {
       </div>
       <GapMeter ranks={ranks} />
       <SeasonChart weeks={weeks} picks={picks} />
-      <Card className="overflow-x-auto border-white/10 bg-black/40 p-4">
+      <div className="space-y-2 md:hidden">
+        {weeks.map((w, i) => (
+          <Link
+            key={w.id}
+            href={`/weeks/${w.id}/results`}
+            className="flex min-h-12 items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-sm"
+          >
+            <span>{w.label}</span>
+            <span className="text-zinc-400">
+              Will {totals.will.byWeek[i]?.pts ?? 0} · Sara {totals.sara.byWeek[i]?.pts ?? 0}
+            </span>
+          </Link>
+        ))}
+      </div>
+      <Card className="hidden overflow-x-auto border-white/10 bg-black/40 p-4 md:block">
         <table className="w-full text-sm">
           <thead className="text-left text-zinc-500">
             <tr>

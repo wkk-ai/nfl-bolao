@@ -26,8 +26,8 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Player</p>
-        <h1 className="font-heading text-5xl text-amber-200">{name}</h1>
+        <p className="text-xs font-medium text-zinc-500">Player</p>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{name}</h1>
         <p className="text-zinc-300">
           {you.pts} season pts · {you.tied ? "tied for first" : `rank ${you.rank}`} · winner streak {streak}
         </p>
@@ -38,7 +38,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
           return (
             <Card key={w.id} className="border-white/10 bg-black/40 p-4">
               <div className="flex items-center justify-between">
-                <div className="font-heading text-xl">{w.label}</div>
+                <div className="text-lg font-medium">{w.label}</div>
                 <div className="text-amber-200">{wp.total} pts</div>
               </div>
               <p className="text-xs text-zinc-500">Running total {totals.byWeek.slice(0, i + 1).reduce((a, b) => a + b.pts, 0)}</p>
@@ -50,7 +50,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         })}
       </div>
       <div>
-        <h2 className="font-heading text-2xl text-amber-200">Badges</h2>
+        <h2 className="text-xl font-medium text-amber-200">Badges</h2>
         <div className="mt-3 grid gap-2 md:grid-cols-2">
           {badges.map((b) => (
             <Card

@@ -37,8 +37,8 @@ export default function HomePage() {
       ) : null}
 
       <section className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Will vs Sara · 2026 regular season</p>
-        <h1 className="font-heading text-4xl text-amber-200 md:text-5xl">The bolão is live.</h1>
+        <p className="text-xs font-medium text-zinc-500">Will vs Sara · 2026 regular season</p>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">The bolão is live.</h1>
         <p className="max-w-2xl text-zinc-300">
           {you.name} sits at {you.pts} pts
           {you.tied ? ", tied with " : you.rank === 1 ? ", leading " : ", chasing "}
@@ -52,7 +52,7 @@ export default function HomePage() {
             {missing.length} game{missing.length === 1 ? "" : "s"} still unpicked this week.
           </p>
           <p className="mt-1 text-sm text-amber-100/80">Kickoff lock is real. Miss it and it’s a zero.</p>
-          <ButtonLink href={`/weeks/${week.id}`} className="mt-3 bg-amber-400 text-black hover:bg-amber-300">
+          <ButtonLink href={`/weeks/${week.id}`} className="mt-3 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto">
             Pick Week {week.id}
           </ButtonLink>
         </Card>
@@ -66,17 +66,17 @@ export default function HomePage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-white/10 bg-black/40 p-4">
           <p className="text-xs text-zinc-500">Your season</p>
-          <p className="font-heading text-3xl text-amber-200">{totals[activePlayer].total}</p>
+          <p className="text-2xl font-medium text-amber-200">{totals[activePlayer].total}</p>
           <p className="text-sm text-zinc-400">{you.tied ? "Tied for first" : `Rank ${you.rank}`}</p>
         </Card>
         <Card className="border-white/10 bg-black/40 p-4">
           <p className="text-xs text-zinc-500">Winner streak</p>
-          <p className="font-heading text-3xl">{streak}</p>
+          <p className="text-2xl font-medium">{streak}</p>
           <p className="text-sm text-zinc-400">Correct winners in a row</p>
         </Card>
         <Card className="border-white/10 bg-black/40 p-4">
           <p className="text-xs text-zinc-500">This week</p>
-          <p className="font-heading text-3xl">W{week.id}</p>
+          <p className="text-2xl font-medium">W{week.id}</p>
           <Badge className="mt-1 bg-white/10">{weekStateLabel(state)}</Badge>
         </Card>
       </div>
@@ -84,14 +84,14 @@ export default function HomePage() {
       <GapMeter ranks={ranks} />
       <SeasonChart weeks={weeks} picks={picks} />
 
-      <div className="flex flex-wrap gap-2">
-        <ButtonLink href={`/weeks/${week.id}/results`} variant="secondary">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+        <ButtonLink href={`/weeks/${week.id}/results`} variant="secondary" className="w-full sm:w-auto">
           Week {week.id} reveal
         </ButtonLink>
-        <ButtonLink href="/leaderboard" variant="secondary">
+        <ButtonLink href="/leaderboard" variant="secondary" className="w-full sm:w-auto">
           Full board
         </ButtonLink>
-        <ButtonLink href={`/players/${activePlayer}`} variant="secondary">
+        <ButtonLink href={`/players/${activePlayer}`} variant="secondary" className="w-full sm:w-auto">
           {you.name}’s page
         </ButtonLink>
       </div>
