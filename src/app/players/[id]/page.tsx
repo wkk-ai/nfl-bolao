@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/button-link";
 import { ErrorState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { badgesFor, ranked, seasonTotals, weekPoints, winnerStreak } from "@/lib/compute";
+import { STARTING_POINTS } from "@/lib/scoring";
 import type { PlayerId } from "@/lib/types";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,7 +42,9 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                 <div className="text-lg font-medium">{w.label}</div>
                 <div className="text-amber-200">{wp.total} pts</div>
               </div>
-              <p className="text-xs text-zinc-500">Running total {totals.byWeek.slice(0, i + 1).reduce((a, b) => a + b.pts, 0)}</p>
+              <p className="text-xs text-zinc-500">
+                Running total {STARTING_POINTS + totals.byWeek.slice(0, i + 1).reduce((a, b) => a + b.pts, 0)}
+              </p>
               <ButtonLink href={`/weeks/${w.id}/results`} size="sm" variant="ghost" className="mt-2">
                 Reveal
               </ButtonLink>

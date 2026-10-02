@@ -13,7 +13,7 @@ import seed from "@/data/seed.json";
 import { getSupabase, supabaseConfigured } from "./supabase";
 import type { MarginBucket, PickRecord, PlayerId, Reaction, SeedWeek } from "./types";
 
-const STORAGE_KEY = "bolao-nfl-2026-v1";
+const STORAGE_KEY = "bolao-nfl-2026-v2";
 
 type Persist = {
   activePlayer: PlayerId;

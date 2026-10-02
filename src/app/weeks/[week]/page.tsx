@@ -45,6 +45,15 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm">
           {missing.length} still blank. Start with any open game.
         </p>
+      ) : state === "final" || state === "locked" ? (
+        <EmptyState
+          title={pts.total === 0 ? "No card this week" : "Nothing left open"}
+          body={
+            pts.total === 0
+              ? "This week was missed. Real scores are on the reveal. The 100-point start does not move."
+              : "Lock already hit. Review the reveal for the receipts."
+          }
+        />
       ) : (
         <EmptyState title="Nothing left open" body="Either lock already hit, or your card is full. Review it before you walk away." />
       )}

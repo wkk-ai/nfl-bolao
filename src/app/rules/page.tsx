@@ -12,6 +12,10 @@ export default function RulesPage() {
       </div>
       <Card className="border-white/10 bg-black/40 p-5 space-y-3 text-sm leading-6 text-zinc-300">
         <p>
+          Will and Sara both start at 100. They missed the early weeks, so those games add nothing and take nothing. New
+          picks stack on top of 100. A blank after kickoff is still a zero for that game, not a deduction from 100.
+        </p>
+        <p>
           Each NFL game gets one winner pick and one winning-margin bucket: 5, 10, 15, or 20. Those are not exact scores.
         </p>
         <ul className="list-disc space-y-1 pl-5">

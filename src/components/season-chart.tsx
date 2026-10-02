@@ -4,6 +4,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { Card } from "@/components/ui/card";
 import type { SeedWeek } from "@/lib/types";
 import { seasonTotals } from "@/lib/compute";
+import { STARTING_POINTS } from "@/lib/scoring";
 import type { PickRecord } from "@/lib/types";
 
 export function SeasonChart({ weeks, picks }: { weeks: SeedWeek[]; picks: PickRecord[] }) {
@@ -12,8 +13,8 @@ export function SeasonChart({ weeks, picks }: { weeks: SeedWeek[]; picks: PickRe
     const prev = acc[acc.length - 1];
     acc.push({
       name: `W${week.id}`,
-      Will: (prev?.Will ?? 0) + (t.will.byWeek[i]?.pts ?? 0),
-      Sara: (prev?.Sara ?? 0) + (t.sara.byWeek[i]?.pts ?? 0),
+      Will: (prev?.Will ?? STARTING_POINTS) + (t.will.byWeek[i]?.pts ?? 0),
+      Sara: (prev?.Sara ?? STARTING_POINTS) + (t.sara.byWeek[i]?.pts ?? 0),
     });
     return acc;
   }, []);

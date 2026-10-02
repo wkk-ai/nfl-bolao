@@ -17,7 +17,7 @@ Every push to `main` publishes that page (GitHub Pages, static export). You can 
 
 To preview the same static files GitHub Pages serves: `npm run build` then `npm start`, and open http://127.0.0.1:43147/nfl-bolao/
 
-The app loads the 2026 ESPN week slate (weeks 1–5). If you do not add a Supabase project, picks live in this browser only and a **Demo data** tag shows. That is enough to use every page.
+The app loads the 2026 ESPN regular-season slate (weeks 1–18). Will and Sara both start at 100 because they missed the early weeks. Missed weeks do not move the score. If you do not add a Supabase project, new picks live in this browser only and a **Demo data** tag shows.
 
 ## Scoring (also on the Rules page)
 

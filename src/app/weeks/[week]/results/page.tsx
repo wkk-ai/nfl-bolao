@@ -42,8 +42,9 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
         <p className="text-xs font-medium text-zinc-500">Weekly reveal</p>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} is on the board</h1>
         <p className="text-zinc-300">
-          Will {will.total} pts · Sara {sara.total} pts
-          {will.bonus || sara.bonus ? " · perfect-week bonus is in the total" : ""}
+          {will.total === 0 && sara.total === 0
+            ? "Neither Will nor Sara had a pick. The 100-point start does not move."
+            : `Will ${will.total} pts · Sara ${sara.total} pts${will.bonus || sara.bonus ? " · perfect-week bonus is in the total" : ""}`}
         </p>
       </div>
       {will.bonus || sara.bonus ? (
@@ -98,6 +99,8 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                         "rounded-lg px-3 py-2 text-sm transition",
                         game.status !== "final"
                           ? "bg-white/5"
+                          : !pick
+                            ? "bg-white/5 text-zinc-400"
                           : ok
                             ? "bg-emerald-500/15 text-emerald-100"
                             : "bg-red-500/15 text-red-100",
@@ -112,7 +115,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                           {scored && scored.bucketOff === 1 ? " · one bucket off" : ""}
                         </div>
                       ) : (
-                        <div>No pick</div>
+                        <div>No pick — they were not in this game</div>
                       )}
                     </div>
                   );

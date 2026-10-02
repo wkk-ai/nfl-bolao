@@ -2,6 +2,7 @@ import type { MarginBucket, PickRecord, PickScore, SeedGame } from "./types";
 
 export const MARGIN_BUCKETS: MarginBucket[] = [5, 10, 15, 20];
 export const PERFECT_WEEK_BONUS = 10;
+export const STARTING_POINTS = 100;
 
 export function actualBucket(margin: number | null | undefined): MarginBucket | null {
   if (margin == null || margin <= 0) return null;

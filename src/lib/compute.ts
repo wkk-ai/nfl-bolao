@@ -5,7 +5,7 @@ import type {
   SeedGame,
   SeedWeek,
 } from "./types";
-import { PERFECT_WEEK_BONUS, scorePick } from "./scoring";
+import { PERFECT_WEEK_BONUS, STARTING_POINTS, scorePick } from "./scoring";
 import { deriveWeekState, gameLocked } from "./week-state";
 import { teamLabel } from "./teams";
 
@@ -74,14 +74,17 @@ export function weekPoints(
       if (scored.correctWinner) winnersHit += 1;
     }
   }
-  const bonus = gamesFinal > 0 && winnersHit === gamesFinal ? PERFECT_WEEK_BONUS : 0;
+  const bonus =
+    gamesFinal > 0 && winnersHit === gamesFinal && week.games.some((g) => pickFor(picks, playerId, g.id))
+      ? PERFECT_WEEK_BONUS
+      : 0;
   return { gamePts, bonus, total: gamePts + bonus, winnersHit, gamesFinal };
 }
 
 export function seasonTotals(weeks: SeedWeek[], picks: PickRecord[]) {
   const byPlayer: Record<PlayerId, { total: number; byWeek: { weekId: number; pts: number }[] }> = {
-    will: { total: 0, byWeek: [] },
-    sara: { total: 0, byWeek: [] },
+    will: { total: STARTING_POINTS, byWeek: [] },
+    sara: { total: STARTING_POINTS, byWeek: [] },
   };
   for (const week of weeks) {
     for (const id of ["will", "sara"] as PlayerId[]) {
@@ -101,6 +104,7 @@ export function winnerStreak(weeks: SeedWeek[], picks: PickRecord[], playerId: P
   let streak = 0;
   for (let i = finals.length - 1; i >= 0; i--) {
     const pick = pickFor(picks, playerId, finals[i].game.id);
+    if (!pick) continue;
     const scored = scorePick(pick, finals[i].game);
     if (scored?.correctWinner) streak += 1;
     else break;
@@ -183,7 +187,9 @@ export function badgesFor(
   let run = 0;
   const ordered = [...finals].sort((a, b) => +new Date(a.kickoff) - +new Date(b.kickoff));
   for (const game of ordered) {
-    const scored = scorePick(pickFor(picks, playerId, game.id), game);
+    const pick = pickFor(picks, playerId, game.id);
+    if (!pick) continue;
+    const scored = scorePick(pick, game);
     if (scored?.correctWinner) {
       correct += 1;
       run += 1;
@@ -192,9 +198,8 @@ export function badgesFor(
       run = 0;
     }
     if (scored?.exactBucket) exact += 1;
-    const pick = pickFor(picks, playerId, game.id);
-    if (pick?.marginBucket === 20) twenties += 1;
-    if (pick?.marginBucket === 5) fives += 1;
+    if (pick.marginBucket === 20) twenties += 1;
+    if (pick.marginBucket === 5) fives += 1;
   }
   const perfectWeeks = weeks.filter((w) => weekPoints(w, picks, playerId).bonus > 0).length;
   const totals = seasonTotals(weeks, picks);

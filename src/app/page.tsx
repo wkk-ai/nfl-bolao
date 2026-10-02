@@ -32,17 +32,18 @@ export default function HomePage() {
     <div className="space-y-6">
       {demo ? (
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
-          Demo data on this device. 2026 ESPN week slate is loaded. Picks stay in the browser until Supabase keys are set.
+          Both chairs started at 100 after missing the early weeks. Those games don’t move the score. New picks stack on 100. Until a Supabase project is wired, cards stay on this device.
         </p>
       ) : null}
 
       <section className="space-y-2">
-        <p className="text-xs font-medium text-zinc-500">Will vs Sara · 2026 regular season</p>
+        <p className="text-xs font-medium text-zinc-500">Will vs Sara · 2026 regular season · ESPN slate</p>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">The bolão is live.</h1>
         <p className="max-w-2xl text-zinc-300">
           {you.name} sits at {you.pts} pts
           {you.tied ? ", tied with " : you.rank === 1 ? ", leading " : ", chasing "}
           {other.name} at {other.pts}. Week {week.id} is {weekStateLabel(state).toLowerCase()}.
+          {you.tied && you.pts === 100 ? " Missed weeks stay at 100." : ""}
         </p>
       </section>
 

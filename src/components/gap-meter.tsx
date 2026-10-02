@@ -15,7 +15,7 @@ export function GapMeter({ ranks }: { ranks: RankRow[] }) {
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-amber-200">Will {will.pts}</span>
         <span className="text-zinc-400">
-          {leader ? `${leader} by ${gap}` : "Tied. Split the pot energy."}
+          {leader ? `${leader} by ${gap}` : will.pts === 100 ? "Tied at 100." : "Tied. Split the pot energy."}
         </span>
         <span className="text-cyan-200">Sara {sara.pts}</span>
       </div>

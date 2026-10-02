@@ -20,7 +20,9 @@ export default function LeaderboardPage() {
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Season board</h1>
         <p className="text-zinc-400">
           {ranks[0].tied
-            ? "Will and Sara are dead even. The next Sunday breaks the tie — or doesn’t."
+            ? ranks[0].pts === 100
+              ? "Will and Sara both sit at 100. They missed the early weeks, so those games don’t count."
+              : "Will and Sara are dead even. The next Sunday breaks the tie — or doesn’t."
             : `${ranks[0].name} wears first. ${ranks[1].name} is ${ranks[0].pts - ranks[1].pts} back.`}
         </p>
       </div>
