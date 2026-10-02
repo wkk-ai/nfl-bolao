@@ -1,14 +1,20 @@
 import type { NextConfig } from "next";
 
+const onPages = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
   agentRules: false,
   output: "export",
   trailingSlash: true,
-  basePath: "/nfl-bolao",
-  assetPrefix: "/nfl-bolao",
   images: {
     unoptimized: true,
   },
+  ...(onPages
+    ? {
+        basePath: "/nfl-bolao",
+        assetPrefix: "/nfl-bolao",
+      }
+    : {}),
 };
 
 export default nextConfig;

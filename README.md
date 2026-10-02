@@ -13,9 +13,9 @@ Every push to `main` publishes that page (GitHub Pages, static export). You can 
 1. Install Node.js 20+.
 2. In this folder: `npm install`
 3. `npm run dev`
-4. Open http://127.0.0.1:43147/nfl-bolao/
+4. Open http://127.0.0.1:43147
 
-The `/nfl-bolao` prefix matches the live GitHub Pages address.
+To preview the same static files GitHub Pages serves: `npm run build` then `npm start`, and open http://127.0.0.1:43147/nfl-bolao/
 
 The app loads the 2026 ESPN week slate (weeks 1–5). If you do not add a Supabase project, picks live in this browser only and a **Demo data** tag shows. That is enough to use every page.
 

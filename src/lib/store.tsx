@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import seed from "@/data/seed.json";
 import { getSupabase, supabaseConfigured } from "./supabase";
@@ -57,6 +58,14 @@ function loadPersist(): Persist {
   }
 }
 
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 function mergePicks(extra: PickRecord[]): PickRecord[] {
   const map = new Map<string, PickRecord>();
   for (const p of seedPicks) map.set(`${p.playerId}:${p.gameId}`, p);
@@ -65,7 +74,8 @@ function mergePicks(extra: PickRecord[]): PickRecord[] {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(false);
+  const ready = useIsClient();
+  const [hydrated, setHydrated] = useState(false);
   const [activePlayer, setActivePlayerState] = useState<PlayerId>("will");
   const [extraPicks, setExtraPicks] = useState<PickRecord[]>([]);
   const [extraReactions, setExtraReactions] = useState<Reaction[]>([]);
@@ -76,12 +86,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setActivePlayerState(p.activePlayer);
     setExtraPicks(p.extraPicks);
     setExtraReactions(p.extraReactions);
-    setReady(true);
+    setHydrated(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!hydrated) return;
     const payload: Persist = { activePlayer, extraPicks, extraReactions };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     const sb = getSupabase();
