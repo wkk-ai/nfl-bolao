@@ -2,7 +2,9 @@ name: Pull NFL scores
 
 on:
   schedule:
-    - cron: "12 7 * * *"
+    - cron: "0 4 * * *"
+    - cron: "0 3-23 * * 0"
+    - cron: "0 0-2 * * 1"
   workflow_dispatch:
 
 jobs:
