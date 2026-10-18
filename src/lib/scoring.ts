@@ -55,7 +55,17 @@ export function bucketIndex(bucket: MarginBucket): number {
 }
 
 export function scorePick(pick: PickRecord | undefined, game: SeedGame): PickScore | null {
-  if (!pick || game.status !== "final" || !game.winner) return null;
+  if (game.status !== "final") return null;
+  const zero: PickScore = {
+    winnerPts: 0,
+    marginPts: 0,
+    total: 0,
+    bucketOff: null,
+    correctWinner: false,
+    exactBucket: false,
+  };
+  if (!game.winner) return zero;
+  if (!pick) return null;
   if (pick.winnerAbbr !== game.winner) {
     return {
       winnerPts: 0,

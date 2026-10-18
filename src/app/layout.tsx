@@ -16,6 +16,13 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Bolão NFL 2026 — Will vs Sara",
   description: "Two-player NFL winner-and-margin pool for the 2026 season.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

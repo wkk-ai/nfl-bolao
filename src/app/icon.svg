@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="American football">
+  <ellipse cx="16" cy="16" rx="14" ry="8.6" fill="#7A3E14" stroke="#F3E6C8" stroke-width="1.7"/>
+  <path d="M7.2 16h17.6" stroke="#F8F4EA" stroke-width="1.5" fill="none"/>
+  <path d="M16 11.2v9.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M13.1 13.2h5.8M13.1 15.1h5.8M13.1 17h5.8M13.1 18.8h5.8" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

@@ -4,18 +4,18 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
-import { weekPoints, weeklyAwards } from "@/lib/compute";
+import { weekHasStarted, weekPoints, weeklyAwards } from "@/lib/compute";
 import { deriveWeekState, weekStateLabel } from "@/lib/week-state";
 
 export default function HistoryPage() {
   const { ready, weeks, picks } = useStore();
   if (!ready) return <PageLoading />;
-  const past = weeks.filter((w) => deriveWeekState(w) === "final" || w.games.some((g) => g.status === "final"));
+  const past = weeks.filter((w) => weekHasStarted(w));
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">History</h1>
-        <p className="text-zinc-400">Finished (and partly finished) weeks. The receipts live here.</p>
+        <p className="text-zinc-400">Every week that has kicked off, including weeks with no card.</p>
       </div>
       <div className="space-y-3">
         {past.map((w) => {

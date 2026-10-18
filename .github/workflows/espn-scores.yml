@@ -1,0 +1,30 @@
+name: Pull NFL scores
+
+on:
+  schedule:
+    - cron: "12 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "psycopg[binary]"
+      - name: Update finals only
+        env:
+          PGHOST: aws-0-us-east-1.pooler.supabase.com
+          PGPORT: "5432"
+          PGUSER: postgres.ikgzdbunhkunekoctuxg
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGDATABASE: postgres
+        working-directory: scripts
+        run: |
+          if [ -z "$PGPASSWORD" ]; then
+            echo "Missing SUPABASE_DB_PASSWORD repo secret."
+            exit 1
+          fi
+          python3 sync-espn-scores.py

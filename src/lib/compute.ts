@@ -47,12 +47,33 @@ export function draftOrPick(
   return draft ?? pickFor(picks, playerId, gameId);
 }
 
-export function weekGames(week: SeedWeek, picks: PickRecord[], now = new Date()): GameView[] {
+export function weekHasStarted(week: SeedWeek, now = new Date()): boolean {
+  return week.games.some((g) => new Date(g.kickoff).getTime() <= now.getTime());
+}
+
+function pickVisibleTo(
+  picks: PickRecord[],
+  owner: PlayerId,
+  game: SeedGame,
+  viewer: PlayerId,
+  now: Date,
+): PickRecord | undefined {
+  if (owner === viewer) return draftOrPick(picks, owner, game.id);
+  if (!gameLocked(game, now)) return undefined;
+  return pickFor(picks, owner, game.id);
+}
+
+export function weekGames(
+  week: SeedWeek,
+  picks: PickRecord[],
+  viewer: PlayerId = "will",
+  now = new Date(),
+): GameView[] {
   return week.games.map((g) => ({
     ...g,
     locked: gameLocked(g, now),
-    willPick: draftOrPick(picks, "will", g.id),
-    saraPick: draftOrPick(picks, "sara", g.id),
+    willPick: pickVisibleTo(picks, "will", g, viewer, now),
+    saraPick: pickVisibleTo(picks, "sara", g, viewer, now),
   }));
 }
 
@@ -74,10 +95,12 @@ export function weekPoints(
       if (scored.correctWinner) winnersHit += 1;
     }
   }
-  const bonus =
-    gamesFinal > 0 && winnersHit === gamesFinal && week.games.some((g) => pickFor(picks, playerId, g.id))
-      ? PERFECT_WEEK_BONUS
-      : 0;
+  const allFinal = week.games.length > 0 && week.games.every((g) => g.status === "final");
+  const everyWinnerRight = week.games.every((g) => {
+    if (!g.winner) return false;
+    return Boolean(scorePick(pickFor(picks, playerId, g.id), g)?.correctWinner);
+  });
+  const bonus = allFinal && everyWinnerRight ? PERFECT_WEEK_BONUS : 0;
   return { gamePts, bonus, total: gamePts + bonus, winnersHit, gamesFinal };
 }
 
@@ -123,6 +146,28 @@ export function unpickedOpenGames(
     const p = draftOrPick(picks, playerId, g.id);
     return !p;
   });
+}
+
+export function nextOpenGame(
+  week: SeedWeek,
+  picks: PickRecord[],
+  playerId: PlayerId,
+  currentGameId: string,
+  now = new Date(),
+): SeedGame | undefined {
+  const open = unpickedOpenGames(week, picks, playerId, now).filter((g) => g.id !== currentGameId);
+  const order = week.games.map((g) => g.id);
+  const idx = order.indexOf(currentGameId);
+  const later = open.filter((g) => order.indexOf(g.id) > idx);
+  return later[0] ?? open[0];
+}
+
+export function gameAnchorId(gameId: string) {
+  return `game-${gameId}`;
+}
+
+export function weekListHref(weekId: number, gameId?: string) {
+  return gameId ? `/weeks/${weekId}?g=${encodeURIComponent(gameId)}` : `/weeks/${weekId}`;
 }
 
 export function weeklyAwards(week: SeedWeek, picks: PickRecord[]): WeekAward[] {
@@ -301,7 +346,12 @@ export function ranked(weeks: SeedWeek[], picks: PickRecord[]): RankRow[] {
 export function currentWeek(weeks: SeedWeek[], now = new Date()): SeedWeek {
   const open = weeks.find((w) => deriveWeekState(w, now) === "open");
   if (open) return open;
-  const locked = weeks.find((w) => deriveWeekState(w, now) === "locked");
-  if (locked) return locked;
+  const live = [...weeks].reverse().find((w) => {
+    const state = deriveWeekState(w, now);
+    return weekHasStarted(w, now) && state !== "final" && state !== "upcoming";
+  });
+  if (live) return live;
+  const next = weeks.find((w) => !weekHasStarted(w, now));
+  if (next) return next;
   return weeks[weeks.length - 1];
 }

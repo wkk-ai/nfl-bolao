@@ -8,15 +8,17 @@ import { EmptyState, ErrorState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { unpickedOpenGames, weekGames, weekPoints, weeklyAwards } from "@/lib/compute";
 import { deriveWeekState, weekStateLabel } from "@/lib/week-state";
+import { useScrollToGame } from "@/lib/focus-game";
 
 export default function WeekMatchupsPage({ params }: { params: Promise<{ week: string }> }) {
   const { week: weekParam } = use(params);
   const weekId = Number(weekParam);
   const { ready, weeks, picks, activePlayer } = useStore();
+  const focusId = useScrollToGame(ready);
   if (!ready) return <PageLoading />;
   const week = weeks.find((w) => w.id === weekId);
   if (!week) return <ErrorState title="Week not found" body="That week is not on the 2026 slate we loaded." />;
-  const games = weekGames(week, picks);
+  const games = weekGames(week, picks, activePlayer);
   const missing = unpickedOpenGames(week, picks, activePlayer);
   const pts = weekPoints(week, picks, activePlayer);
   const awards = weeklyAwards(week, picks);
@@ -50,7 +52,7 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           title={pts.total === 0 ? "No card this week" : "Nothing left open"}
           body={
             pts.total === 0
-              ? "This week was missed. Real scores are on the reveal. The 100-point start does not move."
+              ? "This week was missed. The 100-point start does not move."
               : "Lock already hit. Review the reveal for the receipts."
           }
         />
@@ -72,9 +74,15 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           ))}
         </div>
       ) : null}
-      <div className="grid gap-3">
+      <div className="grid gap-3 pb-16 md:pb-0">
         {games.map((g) => (
-          <GameCard key={g.id} game={g} weekId={weekId} playerId={activePlayer} />
+          <GameCard
+            key={g.id}
+            game={g}
+            weekId={weekId}
+            playerId={activePlayer}
+            focused={focusId === g.id}
+          />
         ))}
       </div>
       <ReactionBar weekId={weekId} from={activePlayer} />

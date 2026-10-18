@@ -1,6 +1,6 @@
 # Bolão NFL 2026 — Will vs Sara
 
-A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. No passwords. Use **I’m Will** or **I’m Sara** at the top. Each person’s card is separate.
+A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. Use **I’m Will** or **I’m Sara** at the top. The first save on a phone sets a 4-digit code for that person. Each person’s card is separate.
 
 This is not a money site. It is the house board for one bolão.
 
@@ -25,7 +25,8 @@ The app loads the 2026 ESPN regular-season slate (weeks 1–18). Will and Sara b
 - Exact margin bucket: +2
 - One bucket off: +1
 - Wrong winner: 0
-- Every winner right in a finished week: +10 bonus
+- Every winner right after the whole week is final: +10 bonus
+- A tied NFL game has no winner: both chairs get 0 for that game
 
 Buckets: **5** = win by 1–7, **10** = 8–12, **15** = 13–17, **20** = 18+. Games lock at kickoff.
 
@@ -50,6 +51,10 @@ Add these two **repository secrets** (GitHub → Settings → Secrets):
 - `SUPABASE_ANON_KEY` — the same anon key
 
 A static note lives at `/nfl-bolao/health/`. That is not a live database check.
+
+## Daily score pull
+
+GitHub Action `.github/workflows/espn-scores.yml` reads ESPN once a day (and when you run it by hand) and updates **games only**. The public site cannot change scores. That job needs the `SUPABASE_DB_PASSWORD` repository secret. Do not put that password in the built site.
 
 ## What is in the app
 

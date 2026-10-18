@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,8 @@ import { TeamLogo } from "@/components/team-logo";
 import { ButtonLink } from "@/components/button-link";
 import { ErrorState, EmptyState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
-import { draftOrPick } from "@/lib/compute";
+import { draftOrPick, gameAnchorId } from "@/lib/compute";
+import { useScrollToGame } from "@/lib/focus-game";
 import { bucketRange } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
 import { toast } from "sonner";
@@ -18,6 +19,9 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
   const weekId = Number(weekParam);
   const router = useRouter();
   const { ready, weeks, picks, activePlayer, submitWeek } = useStore();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const focusId = useScrollToGame(ready);
   if (!ready) return <PageLoading />;
   const week = weeks.find((w) => w.id === weekId);
   if (!week) return <ErrorState title="Week not found" body="Cannot review a week that does not exist." />;
@@ -34,7 +38,8 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
       <div>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Review {week.label}</h1>
         <p className="text-zinc-400">
-          Check every line before you lock it in. Drafts stay drafts until you submit.
+          Drafts are not on the card yet. Submit is the only tap that counts, and this page waits until that save
+          works.
         </p>
       </div>
       {openMissing.length > 0 ? (
@@ -44,9 +49,13 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
       ) : (
         <EmptyState title="Card looks full" body="Hit submit to stamp these picks. After kickoff they will not move." />
       )}
-      <div className="space-y-2">
+      <div className="space-y-2 pb-16 md:pb-0">
         {rows.map(({ game, pick, locked }) => (
-          <Card key={game.id} className="flex flex-col gap-3 border-white/10 bg-black/40 p-3 sm:flex-row sm:items-center">
+          <Card
+            key={game.id}
+            id={gameAnchorId(game.id)}
+            className={`scroll-mt-40 scroll-mb-28 flex flex-col gap-3 border-white/10 bg-black/40 p-3 sm:flex-row sm:items-center ${focusId === game.id ? "ring-2 ring-amber-300/80" : ""}`}
+          >
             <div className="flex min-w-0 items-center gap-3">
               <TeamLogo abbr={game.awayAbbr} size={32} />
               <span className="text-xs text-zinc-500">@</span>
@@ -78,16 +87,27 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
         ))}
       </div>
       <Button
+        disabled={submitting}
         className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto"
-
-        onClick={() => {
-          submitWeek(weekId);
+        onClick={async () => {
+          if (submitting) return;
+          setSubmitting(true);
+          setSubmitError(null);
+          const ok = await submitWeek(weekId);
+          setSubmitting(false);
+          if (!ok) {
+            setSubmitError("Submit did not land. The card is still a draft.");
+            toast.error("Submit failed. Nothing was counted.");
+            return;
+          }
           toast.success("Card submitted. Kickoff still owns the lock.");
           router.push(`/weeks/${weekId}/confirm`);
         }}
       >
-        Submit {activePlayer === "will" ? "Will" : "Sara"}’s card
+        {submitting ? "Submitting…" : `Submit ${activePlayer === "will" ? "Will" : "Sara"}’s card`}
       </Button>
+      {submitError ? <p className="text-sm text-red-300">{submitError}</p> : null}
+      <div className="h-12 md:hidden" aria-hidden />
     </div>
   );
 }

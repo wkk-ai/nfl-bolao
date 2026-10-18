@@ -7,8 +7,9 @@ import { ButtonLink } from "@/components/button-link";
 import { ErrorState, EmptyState, PageLoading } from "@/components/states";
 import { ReactionBar } from "@/components/reaction-bar";
 import { useStore } from "@/lib/store";
-import { pickFor, weekPoints, weeklyAwards } from "@/lib/compute";
+import { pickFor, weekHasStarted, weekPoints, weeklyAwards } from "@/lib/compute";
 import { bucketRange, scorePick } from "@/lib/scoring";
+import { gameLocked } from "@/lib/week-state";
 import { cn } from "@/lib/utils";
 
 export default function ResultsPage({ params }: { params: Promise<{ week: string }> }) {
@@ -24,12 +25,17 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
   const awards = weeklyAwards(week, picks);
 
   if (finals.length === 0) {
+    const started = weekHasStarted(week);
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} reveal</h1>
         <EmptyState
-          title="No finals yet"
-          body="Thursday’s game is in. The rest of this week is still upcoming. Come back after kickoffs."
+          title={started ? "Scores are not in yet" : "This week has not started"}
+          body={
+            started
+              ? "Games have kicked off. Come back when the scoreboard posts a final."
+              : "Nothing has kicked off in this week yet."
+          }
         />
         <ButtonLink href={`/weeks/${weekId}`}>Matchups</ButtonLink>
       </div>
@@ -79,7 +85,9 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                         {game.awayScore}–{game.homeScore}
                       </div>
                       <div className="text-zinc-400">
-                        {game.winner} by {game.margin} · {actual ? bucketRange(actual) : "tie"}
+                        {game.winner
+                          ? `${game.winner} by ${game.margin}${actual ? ` · ${bucketRange(actual)}` : ""}`
+                          : "Tie"}
                       </div>
                     </>
                   ) : (
@@ -89,8 +97,9 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 {(["will", "sara"] as const).map((pid) => {
-                  const pick = pickFor(picks, pid, game.id);
-                  const scored = scorePick(pick, game);
+                  const hide = pid !== activePlayer && !gameLocked(game);
+                  const pick = hide ? undefined : pickFor(picks, pid, game.id);
+                  const scored = hide ? null : scorePick(pick, game);
                   const ok = scored?.correctWinner;
                   return (
                     <div
@@ -99,7 +108,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                         "rounded-lg px-3 py-2 text-sm transition",
                         game.status !== "final"
                           ? "bg-white/5"
-                          : !pick
+                          : hide || !pick
                             ? "bg-white/5 text-zinc-400"
                           : ok
                             ? "bg-emerald-500/15 text-emerald-100"
@@ -107,15 +116,18 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                       )}
                     >
                       <div className="font-medium">{pid === "will" ? "Will" : "Sara"}</div>
-                      {pick ? (
+                      {hide ? (
+                        <div>Hidden until kickoff</div>
+                      ) : pick ? (
                         <div>
                           {pick.winnerAbbr} · {bucketRange(pick.marginBucket)}
                           {scored ? ` · ${scored.total} pts` : ""}
                           {scored?.exactBucket ? " · exact bucket" : ""}
                           {scored && scored.bucketOff === 1 ? " · one bucket off" : ""}
+                          {game.status === "final" && !game.winner ? " · tie, 0 pts" : ""}
                         </div>
                       ) : (
-                        <div>No pick — they were not in this game</div>
+                        <div>{game.status === "final" ? "Left it blank" : "No pick yet"}</div>
                       )}
                     </div>
                   );

@@ -11,12 +11,12 @@ import {
   useSyncExternalStore,
 } from "react";
 import seed from "@/data/seed.json";
+import { PinDialog } from "@/components/pin-dialog";
 import { getSupabase, supabaseConfigured } from "./supabase";
 import {
   mapPicks,
   mapReactions,
   mapWeeks,
-  pickToRow,
   type GameRow,
   type PickRow,
   type ReactionRow,
@@ -24,14 +24,9 @@ import {
 } from "./remote";
 import type { MarginBucket, PickRecord, PlayerId, Reaction, SeedWeek } from "./types";
 
-const STORAGE_KEY = "bolao-nfl-2026-v2";
 const PLAYER_KEY = "bolao-nfl-2026-player";
-
-type Persist = {
-  activePlayer: PlayerId;
-  extraPicks: PickRecord[];
-  extraReactions: Reaction[];
-};
+const PIN_KEY = "bolao-nfl-2026-pins";
+const LEGACY_KEY = "bolao-nfl-2026-v2";
 
 type StoreValue = {
   ready: boolean;
@@ -42,8 +37,13 @@ type StoreValue = {
   weeks: SeedWeek[];
   picks: PickRecord[];
   reactions: Reaction[];
-  saveDraft: (gameId: string, weekId: number, winnerAbbr: string, marginBucket: MarginBucket) => void;
-  submitWeek: (weekId: number) => void;
+  saveDraft: (
+    gameId: string,
+    weekId: number,
+    winnerAbbr: string,
+    marginBucket: MarginBucket,
+  ) => Promise<boolean>;
+  submitWeek: (weekId: number) => Promise<boolean>;
   addReaction: (weekId: number, emoji: string, body: string) => void;
 };
 
@@ -53,24 +53,55 @@ const seedWeeks = seed.weeks as SeedWeek[];
 const seedPicks = seed.picks as PickRecord[];
 const seedReactions = seed.reactions as Reaction[];
 
-function loadPersist(): Persist {
-  if (typeof window === "undefined") {
-    return { activePlayer: "will", extraPicks: [], extraReactions: [] };
-  }
+function readPlayer(): PlayerId {
+  if (typeof window === "undefined") return "will";
+  const v = localStorage.getItem(PLAYER_KEY);
+  return v === "sara" ? "sara" : "will";
+}
+
+function readPin(player: PlayerId): string | null {
+  if (typeof window === "undefined") return null;
   try {
-    const playerOnly = localStorage.getItem(PLAYER_KEY);
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Persist) : null;
-    const fromParsed = parsed?.activePlayer === "sara" ? "sara" : parsed?.activePlayer === "will" ? "will" : null;
-    const fromPlayer = playerOnly === "sara" ? "sara" : playerOnly === "will" ? "will" : null;
-    return {
-      activePlayer: fromPlayer ?? fromParsed ?? "will",
-      extraPicks: parsed?.extraPicks ?? [],
-      extraReactions: parsed?.extraReactions ?? [],
-    };
+    const parsed = JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
+    const pin = parsed[player];
+    return /^\d{4}$/.test(pin) ? pin : null;
   } catch {
-    return { activePlayer: "will", extraPicks: [], extraReactions: [] };
+    return null;
   }
+}
+
+function writePin(player: PlayerId, pin: string) {
+  const parsed = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
+    } catch {
+      return {};
+    }
+  })();
+  parsed[player] = pin;
+  localStorage.setItem(PIN_KEY, JSON.stringify(parsed));
+}
+
+function clearPin(player: PlayerId) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
+    delete parsed[player];
+    localStorage.setItem(PIN_KEY, JSON.stringify(parsed));
+  } catch {
+    localStorage.removeItem(PIN_KEY);
+  }
+}
+
+function dropLegacyPracticePicks() {
+  try {
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function rpcMessage(err: { message?: string } | null): string {
+  return (err?.message || "").toLowerCase();
 }
 
 function useIsClient() {
@@ -81,25 +112,27 @@ function useIsClient() {
   );
 }
 
-function mergePicks(base: PickRecord[], extra: PickRecord[]): PickRecord[] {
-  const map = new Map<string, PickRecord>();
-  for (const p of base) map.set(`${p.playerId}:${p.gameId}`, p);
-  for (const p of extra) map.set(`${p.playerId}:${p.gameId}`, p);
-  return [...map.values()];
-}
-
-async function loadBoard() {
+async function loadBoard(player: PlayerId, pin: string | null) {
   const sb = getSupabase();
   if (!sb) return null;
+  const picksArgs = { p_player: player, p_pin: pin ?? "" };
   const [weeksRes, gamesRes, picksRes, reactionsRes] = await Promise.all([
     sb.from("weeks").select("id,season,label,state").order("id"),
     sb.from("games").select(
       "id,week_id,kickoff,home_abbr,away_abbr,home_name,away_name,home_score,away_score,status,winner_abbr,margin,margin_bucket,venue",
     ),
-    sb.from("picks").select("player_id,game_id,week_id,winner_abbr,margin_bucket,submitted_at"),
+    sb.rpc("visible_picks", picksArgs),
     sb.from("reactions").select("id,from_player_id,to_player_id,week_id,emoji,body").order("created_at"),
   ]);
-  const err = weeksRes.error || gamesRes.error || picksRes.error || reactionsRes.error;
+  let pickRows = picksRes.data;
+  let pickErr = picksRes.error;
+  if (pickErr && rpcMessage(pickErr).includes("bad_pin")) {
+    clearPin(player);
+    const retry = await sb.rpc("visible_picks", { p_player: player, p_pin: "" });
+    pickErr = retry.error;
+    pickRows = retry.data;
+  }
+  const err = weeksRes.error || gamesRes.error || pickErr || reactionsRes.error;
   if (err) throw new Error(err.message);
   const weekRows = weeksRes.data ?? [];
   const gameRows = gamesRes.data ?? [];
@@ -108,7 +141,7 @@ async function loadBoard() {
   }
   return {
     weeks: mapWeeks(weekRows as WeekRow[], gameRows as GameRow[]),
-    picks: mapPicks((picksRes.data ?? []) as PickRow[]),
+    picks: mapPicks((pickRows ?? []) as PickRow[]),
     reactions: mapReactions((reactionsRes.data ?? []) as ReactionRow[]),
   };
 }
@@ -122,65 +155,74 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [weeks, setWeeks] = useState<SeedWeek[]>(seedWeeks);
   const [picks, setPicks] = useState<PickRecord[]>(seedPicks);
   const [reactions, setReactions] = useState<Reaction[]>(seedReactions);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [pinMode, setPinMode] = useState<"set" | "enter">("set");
+  const [pinError, setPinError] = useState<string | null>(null);
+  const pinResolver = useRef<(pin: string | null) => void>(() => {});
 
   const weeksRef = useRef(weeks);
-  const picksRef = useRef(picks);
+  const playerRef = useRef(activePlayer);
   weeksRef.current = weeks;
-  picksRef.current = picks;
+  playerRef.current = activePlayer;
+
+  const askPin = useCallback((mode: "set" | "enter") => {
+    setPinMode(mode);
+    setPinError(null);
+    setPinOpen(true);
+    return new Promise<string | null>((resolve) => {
+      pinResolver.current = resolve;
+    });
+  }, []);
+
+  const closePin = useCallback((pin: string | null) => {
+    setPinOpen(false);
+    pinResolver.current(pin);
+  }, []);
+
+  const ensurePin = useCallback(async () => {
+    const player = playerRef.current;
+    const existing = readPin(player);
+    const sb = getSupabase();
+    if (!sb) return existing;
+    const { data } = await sb.rpc("has_pin", { p_player: player });
+    const has = Boolean(data);
+    if (existing) return existing;
+    return askPin(has ? "enter" : "set");
+  }, [askPin]);
+
+  const refresh = useCallback(async () => {
+    const player = playerRef.current;
+    const board = await loadBoard(player, readPin(player));
+    if (!board) return;
+    setWeeks(board.weeks);
+    setPicks(board.picks);
+    setReactions(board.reactions);
+    setError(null);
+  }, []);
 
   useEffect(() => {
-    const persist = loadPersist();
-    setActivePlayerState(persist.activePlayer);
-
+    dropLegacyPracticePicks();
+    setActivePlayerState(readPlayer());
     if (!configured) {
-      setPicks(mergePicks(seedPicks, persist.extraPicks));
-      setReactions([...seedReactions, ...persist.extraReactions]);
+      setPicks(seedPicks);
+      setReactions(seedReactions);
       setHydrated(true);
       return;
     }
-
     let cancelled = false;
-
-    async function boot() {
+    (async () => {
       try {
-        const sb = getSupabase();
-        if (sb && persist.extraPicks.length) {
-          const { error: migrateErr } = await sb.from("picks").upsert(
-            persist.extraPicks.map(pickToRow),
-            { onConflict: "player_id,game_id" },
-          );
-          if (migrateErr) throw migrateErr;
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({ activePlayer: persist.activePlayer, extraPicks: [], extraReactions: [] }),
-          );
-        }
-        const board = await loadBoard();
-        if (cancelled || !board) return;
-        setWeeks(board.weeks);
-        setPicks(board.picks);
-        setReactions(board.reactions);
-        setError(null);
+        await refresh();
       } catch {
         if (!cancelled) setError("Could not reach the shared board. Picks may not show up on the other phone yet.");
       } finally {
         if (!cancelled) setHydrated(true);
       }
-    }
-
-    void boot();
+    })();
     return () => {
       cancelled = true;
     };
-  }, [configured]);
-
-  useEffect(() => {
-    if (!hydrated || configured) return;
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ activePlayer, extraPicks: picks.filter((p) => !seedPicks.includes(p)), extraReactions: reactions }),
-    );
-  }, [hydrated, configured, activePlayer, picks, reactions]);
+  }, [configured, refresh]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -188,50 +230,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [hydrated, activePlayer]);
 
   useEffect(() => {
+    if (!configured || !hydrated) return;
+    void refresh().catch(() => setError("Could not refresh the shared board."));
+  }, [activePlayer, configured, hydrated, refresh]);
+
+  useEffect(() => {
     if (!configured) return;
     const sb = getSupabase();
     if (!sb) return;
     let cancelled = false;
-    async function refresh() {
-      try {
-        const board = await loadBoard();
-        if (cancelled || !board) return;
-        setWeeks(board.weeks);
-        setPicks(board.picks);
-        setReactions(board.reactions);
-        setError(null);
-      } catch {
-        if (!cancelled) setError("Could not refresh the shared board.");
-      }
-    }
     const channel = sb
-      .channel("bolao-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "picks" }, () => {
-        void refresh();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, () => {
-        void refresh();
-      })
+      .channel("bolao-scores")
       .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
-        void refresh();
+        if (!cancelled) void refresh();
       })
       .subscribe();
     const poll = window.setInterval(() => {
-      void refresh();
-    }, 12000);
+      if (!cancelled) void refresh();
+    }, 20000);
     return () => {
       cancelled = true;
       window.clearInterval(poll);
       void sb.removeChannel(channel);
     };
-  }, [configured]);
+  }, [configured, refresh]);
 
   const setActivePlayer = useCallback((id: PlayerId) => {
     setActivePlayerState(id);
   }, []);
 
   const saveDraft = useCallback(
-    (gameId: string, weekId: number, winnerAbbr: string, marginBucket: MarginBucket) => {
+    async (gameId: string, weekId: number, winnerAbbr: string, marginBucket: MarginBucket) => {
       const row: PickRecord = {
         playerId: activePlayer,
         gameId,
@@ -241,53 +270,109 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         submittedAt: null,
         draft: true,
       };
+      if (!configured) {
+        setPicks((prev) => {
+          const next = prev.filter((p) => !(p.playerId === activePlayer && p.gameId === gameId));
+          next.push(row);
+          return next;
+        });
+        return true;
+      }
+      const sb = getSupabase();
+      if (!sb) return false;
+      const pin = await ensurePin();
+      if (!pin) return false;
+      const { error: err } = await sb.rpc("save_picks", {
+        p_player: activePlayer,
+        p_pin: pin,
+        p_picks: [
+          {
+            game_id: gameId,
+            week_id: weekId,
+            winner_abbr: winnerAbbr,
+            margin_bucket: marginBucket,
+          },
+        ],
+        p_submit: false,
+      });
+      if (err) {
+        const msg = rpcMessage(err);
+        if (msg.includes("bad_pin")) {
+          clearPin(activePlayer);
+          setError("Wrong code. That pick was not saved.");
+        } else if (msg.includes("kickoff_lock")) {
+          setError("Kickoff already hit. That pick was not saved.");
+        } else {
+          setError("Could not save that draft.");
+        }
+        return false;
+      }
+      writePin(activePlayer, pin);
       setPicks((prev) => {
         const next = prev.filter((p) => !(p.playerId === activePlayer && p.gameId === gameId));
         next.push(row);
         return next;
       });
-      const sb = getSupabase();
-      if (!sb) return;
-      void sb
-        .from("picks")
-        .upsert(pickToRow(row), { onConflict: "player_id,game_id" })
-        .then(({ error: err }) => {
-          if (err) setError("Could not save that pick to the shared board.");
-        });
+      setError(null);
+      return true;
     },
-    [activePlayer],
+    [activePlayer, configured, ensurePin],
   );
 
   const submitWeek = useCallback(
-    (weekId: number) => {
+    async (weekId: number) => {
       const now = new Date().toISOString();
       const weekGameIds = new Set(
         weeksRef.current.find((w) => w.id === weekId)?.games.map((g) => g.id) ?? [],
       );
-      let extras: PickRecord[] = [];
-      setPicks((prev) => {
-        extras = prev
-          .filter((p) => p.playerId === activePlayer && weekGameIds.has(p.gameId))
-          .map((p) => ({
-            ...p,
-            draft: false,
-            submittedAt: p.submittedAt ?? now,
-          }));
-        const others = prev.filter(
-          (p) => !(p.playerId === activePlayer && weekGameIds.has(p.gameId)),
+      if (!configured) {
+        setPicks((prev) =>
+          prev.map((p) =>
+            p.playerId === activePlayer && weekGameIds.has(p.gameId)
+              ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
+              : p,
+          ),
         );
-        return [...others, ...extras];
-      });
+        return true;
+      }
       const sb = getSupabase();
-      if (!sb || extras.length === 0) return;
-      void sb
-        .from("picks")
-        .upsert(extras.map(pickToRow), { onConflict: "player_id,game_id" })
-        .then(({ error: err }) => {
-          if (err) setError("Could not lock that week on the shared board.");
-        });
+      if (!sb) return false;
+      const pin = await ensurePin();
+      if (!pin) return false;
+      const { error: err } = await sb.rpc("submit_week", {
+        p_player: activePlayer,
+        p_pin: pin,
+        p_week: weekId,
+      });
+      if (err) {
+        const msg = rpcMessage(err);
+        if (msg.includes("bad_pin")) {
+          clearPin(activePlayer);
+          setError("Wrong code. The card was not submitted.");
+        } else {
+          setError("Could not submit that card.");
+        }
+        return false;
+      }
+      writePin(activePlayer, pin);
+      setPicks((prev) =>
+        prev.map((p) =>
+          p.playerId === activePlayer && weekGameIds.has(p.gameId) && !p.draft
+            ? p
+            : p.playerId === activePlayer && weekGameIds.has(p.gameId)
+              ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
+              : p,
+        ),
+      );
+      setError(null);
+      try {
+        await refresh();
+      } catch {
+        /* local stamp already applied */
+      }
+      return true;
     },
-    [activePlayer],
+    [activePlayer, configured, ensurePin, refresh],
   );
 
   const addReaction = useCallback(
@@ -322,7 +407,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<StoreValue>(
     () => ({
-      ready,
+      ready: ready && hydrated,
       demo: !configured,
       error,
       activePlayer,
@@ -336,6 +421,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       ready,
+      hydrated,
       configured,
       error,
       activePlayer,
@@ -349,7 +435,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      <PinDialog
+        open={pinOpen}
+        player={activePlayer}
+        mode={pinMode}
+        error={pinError}
+        onSubmit={(pin) => closePin(pin)}
+        onCancel={() => closePin(null)}
+      />
+    </Ctx.Provider>
+  );
 }
 
 export function useStore() {

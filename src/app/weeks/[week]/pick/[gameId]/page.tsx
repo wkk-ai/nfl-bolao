@@ -11,10 +11,11 @@ import { useStore } from "@/lib/store";
 import { bucketCopy, bucketRange, MARGIN_BUCKETS } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
 import { formatKickoff } from "@/lib/format";
-import { draftOrPick } from "@/lib/compute";
+import { draftOrPick, nextOpenGame, weekListHref } from "@/lib/compute";
 import type { MarginBucket } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { teamMeta } from "@/lib/teams";
+import { toast } from "sonner";
 
 export default function PickPage({
   params,
@@ -25,6 +26,8 @@ export default function PickPage({
   const weekId = Number(weekParam);
   const router = useRouter();
   const { ready, weeks, picks, activePlayer, saveDraft } = useStore();
+  const [saving, setSaving] = useState<"draft" | "next" | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const week = weeks.find((w) => w.id === weekId);
   const game = week?.games.find((g) => g.id === gameId);
   const existing = game ? draftOrPick(picks, activePlayer, game.id) : undefined;
@@ -134,19 +137,55 @@ export default function PickPage({
           Choose a winner to unlock the margin buckets.
         </Card>
       )}
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-col gap-2 pb-16 md:flex-row md:flex-wrap md:pb-0">
         <Button
-          disabled={!winner || !bucket}
-          className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto"
-          onClick={() => {
-            if (!winner || !bucket) return;
-            saveDraft(game.id, weekId, winner, bucket);
-            router.push(`/weeks/${weekId}/review`);
+          disabled={!winner || !bucket || saving !== null}
+          className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 md:w-auto"
+          onClick={async () => {
+            if (!winner || !bucket || saving) return;
+            setSaving("draft");
+            setSaveError(null);
+            const ok = await saveDraft(game.id, weekId, winner, bucket);
+            setSaving(null);
+            if (!ok) {
+              setSaveError("Draft not saved. Set the code if asked, then try again.");
+              return;
+            }
+            router.push(weekListHref(weekId, game.id));
           }}
         >
-          Save to card
+          {saving === "draft" ? "Saving draft…" : "Save as draft"}
         </Button>
-        <ButtonLink href={`/weeks/${weekId}`} variant="ghost" className="h-12 min-h-12 w-full sm:w-auto">
+        <Button
+          disabled={!winner || !bucket || saving !== null}
+          variant="secondary"
+          className="h-12 min-h-12 w-full border border-amber-300/40 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20 md:w-auto"
+          onClick={async () => {
+            if (!winner || !bucket || saving) return;
+            const next = nextOpenGame(week, picks, activePlayer, game.id);
+            setSaving("next");
+            setSaveError(null);
+            const ok = await saveDraft(game.id, weekId, winner, bucket);
+            setSaving(null);
+            if (!ok) {
+              setSaveError("Draft not saved. Set the code if asked, then try again.");
+              return;
+            }
+            if (!next) {
+              toast.message("No next open game. Back on this match.");
+              router.push(weekListHref(weekId, game.id));
+              return;
+            }
+            router.push(`/weeks/${weekId}/pick/${next.id}`);
+          }}
+        >
+          {saving === "next" ? "Saving…" : "Save and next"}
+        </Button>
+        <p className="w-full text-sm text-zinc-400">
+          This is still a draft. It counts only after you submit the card. Save and next jumps to the next blank game.
+        </p>
+        {saveError ? <p className="w-full text-sm text-red-300">{saveError}</p> : null}
+        <ButtonLink href={weekListHref(weekId, game.id)} variant="ghost" className="h-12 min-h-12 w-full md:w-auto">
           Cancel
         </ButtonLink>
       </div>

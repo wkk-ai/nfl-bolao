@@ -8,7 +8,10 @@ export default function RulesPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">House rules</h1>
-        <p className="text-zinc-400">Two chairs. Will and Sara. No passwords. Switch the name at the top and pick your own card.</p>
+        <p className="text-zinc-400">
+          Two chairs. Will and Sara. Switch the name at the top. The first save on a phone sets a 4-digit code for that
+          person. Later saves from that phone reuse it.
+        </p>
       </div>
       <Card className="border-white/10 bg-black/40 p-5 space-y-3 text-sm leading-6 text-zinc-300">
         <p>
@@ -36,17 +39,19 @@ export default function RulesPage() {
           (one bucket off). Pick the other team: nothing.
         </p>
         <p>
-          If you get every winner in a finished week, you take a +10 perfect-week bonus on top of game points. Margin misses
-          do not kill the bonus — only a wrong winner does.
+          The +10 perfect-week bonus only lands when every game that week is final and every winner was right. A blank, a
+          miss, or a tie (no winner) kills the bonus. Margin misses do not.
         </p>
         <h2 className="text-xl font-medium text-amber-200">Locks</h2>
         <p>
-          Each game locks at its own kickoff. You can still pick later games in the same week. A blank after lock is a zero
-          for that game. Will’s card never overwrites Sara’s.
+          Each game locks at its own kickoff, in the database, not just on the screen. After kickoff, picks cannot be added
+          or changed. You can still pick later games in the same week. A blank after lock is a zero for that game. The other
+          chair’s pick stays hidden until that game kicks off.
         </p>
         <h2 className="text-xl font-medium text-amber-200">Ties</h2>
         <p>
-          If season points match, the board shows a tie for first. No leftover third-string tiebreaker. Live with it.
+          A tied NFL game has no winner. Both chairs get 0 for that game, even if they picked a side. If season points
+          match, the board shows a tie for first.
         </p>
       </Card>
     </div>

@@ -7,7 +7,7 @@ import { TeamLogo } from "@/components/team-logo";
 import { formatKickoffShort } from "@/lib/format";
 import { bucketRange } from "@/lib/scoring";
 import { teamMeta } from "@/lib/teams";
-import type { GameView } from "@/lib/compute";
+import { gameAnchorId, type GameView } from "@/lib/compute";
 import type { PlayerId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -15,17 +15,23 @@ export function GameCard({
   game,
   weekId,
   playerId,
+  focused = false,
 }: {
   game: GameView;
   weekId: number;
   playerId: PlayerId;
+  focused?: boolean;
 }) {
   const pick = playerId === "will" ? game.willPick : game.saraPick;
   const other = playerId === "will" ? game.saraPick : game.willPick;
   const home = teamMeta(game.homeAbbr);
   return (
     <Card
-      className="overflow-hidden border-white/10 bg-black/40"
+      id={gameAnchorId(game.id)}
+      className={cn(
+        "scroll-mt-40 scroll-mb-28 overflow-hidden border-white/10 bg-black/40",
+        focused && "ring-2 ring-amber-300/80",
+      )}
       style={{ borderLeft: `4px solid ${home.primary}` }}
     >
       <Link
@@ -43,7 +49,7 @@ export function GameCard({
             <TeamLogo abbr={game.awayAbbr} className="shrink-0" />
             <div className="min-w-0">
               <div className="font-medium">{game.awayAbbr}</div>
-              <div className="truncate text-xs text-zinc-500">{game.awayName}</div>
+              <div className="text-xs leading-tight text-zinc-500">{game.awayName}</div>
             </div>
           </div>
           <div className="px-1 text-center text-lg font-medium tabular-nums">
@@ -58,7 +64,7 @@ export function GameCard({
           <div className="flex min-w-0 items-center justify-end gap-2 text-right">
             <div className="min-w-0">
               <div className="font-medium">{game.homeAbbr}</div>
-              <div className="truncate text-xs text-zinc-500">{game.homeName}</div>
+              <div className="text-xs leading-tight text-zinc-500">{game.homeName}</div>
             </div>
             <TeamLogo abbr={game.homeAbbr} className="shrink-0" />
           </div>
@@ -70,7 +76,11 @@ export function GameCard({
           </span>
           <span className="rounded-md bg-white/5 px-2 py-1 text-zinc-400">
             {playerId === "will" ? "Sara" : "Will"}:{" "}
-            {other ? `${other.winnerAbbr} · ${bucketRange(other.marginBucket)}` : "still out"}
+            {game.locked
+              ? other
+                ? `${other.winnerAbbr} · ${bucketRange(other.marginBucket)}`
+                : "still out"
+              : "hidden until kickoff"}
           </span>
         </div>
       </Link>
