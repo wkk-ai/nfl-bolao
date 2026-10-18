@@ -29,6 +29,10 @@ export function PinDialog({
     if (open) setPin("");
   }, [open, player, mode]);
 
+  useEffect(() => {
+    if (!busy && error) setPin("");
+  }, [busy, error]);
+
   if (!open) return null;
 
   return (
@@ -46,8 +50,8 @@ export function PinDialog({
         </h2>
         <p className="mt-2 text-sm text-zinc-400">
           {mode === "set"
-            ? "This phone remembers it. The other phone needs the same code to write this card. We only store a hash of it."
-            : "This phone does not have the code yet. A wrong code cannot change the card."}
+            ? "This phone remembers it. We’ll save this pick in the same step. The other phone needs the same code. We only store a hash of it."
+            : "This phone does not have the code yet. Type it to save. A wrong code cannot change the card."}
         </p>
         <Input
           autoFocus
@@ -66,7 +70,7 @@ export function PinDialog({
             disabled={!/^\d{4}$/.test(pin) || busy}
             className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300"
           >
-            {mode === "set" ? "Save code" : "Use code"}
+            {busy ? "Saving…" : mode === "set" ? "Save code and pick" : "Use code"}
           </Button>
           <Button type="button" variant="ghost" className="h-12 min-h-12 w-full" onClick={onCancel} disabled={busy}>
             Cancel

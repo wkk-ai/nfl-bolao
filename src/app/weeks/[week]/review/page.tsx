@@ -93,11 +93,11 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
           if (submitting) return;
           setSubmitting(true);
           setSubmitError(null);
-          const ok = await submitWeek(weekId);
+          const result = await submitWeek(weekId);
           setSubmitting(false);
-          if (!ok) {
-            setSubmitError("Submit did not land. The card is still a draft.");
-            toast.error("Submit failed. Nothing was counted.");
+          if (!result.ok) {
+            setSubmitError(result.message);
+            toast.error(result.message);
             return;
           }
           toast.success("Card submitted. Kickoff still owns the lock.");

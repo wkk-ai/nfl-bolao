@@ -30,7 +30,7 @@ grant select on table public.results to anon, authenticated;
 create or replace function public._pin_verify(p_player text, p_pin text) returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   stored text;
@@ -45,14 +45,14 @@ begin
   if stored is null then
     return false;
   end if;
-  return stored = crypt(p_pin, stored);
+  return stored = extensions.crypt(p_pin, stored);
 end;
 $$;
 
 create or replace function public._pin_set_or_verify(p_player text, p_pin text) returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   stored text;
@@ -66,11 +66,11 @@ begin
   select pin_hash into stored from public.players where id = p_player for update;
   if stored is null then
     update public.players
-      set pin_hash = crypt(p_pin, gen_salt('bf', 8))
+      set pin_hash = extensions.crypt(p_pin, extensions.gen_salt('bf'::text, 8))
       where id = p_player;
     return true;
   end if;
-  return stored = crypt(p_pin, stored);
+  return stored = extensions.crypt(p_pin, stored);
 end;
 $$;
 
@@ -78,7 +78,7 @@ create or replace function public.has_pin(p_player text)
 returns boolean
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 stable
 as $$
   select coalesce((select pin_hash is not null from public.players where id = p_player), false);
@@ -95,7 +95,7 @@ returns table (
 )
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   pin_ok boolean := false;
@@ -137,7 +137,7 @@ create or replace function public.save_picks(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   rec jsonb;
@@ -222,7 +222,7 @@ create or replace function public.submit_week(p_player text, p_pin text, p_week 
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   now_ts timestamptz := now();

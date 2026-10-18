@@ -145,10 +145,10 @@ export default function PickPage({
             if (!winner || !bucket || saving) return;
             setSaving("draft");
             setSaveError(null);
-            const ok = await saveDraft(game.id, weekId, winner, bucket);
+            const result = await saveDraft(game.id, weekId, winner, bucket);
             setSaving(null);
-            if (!ok) {
-              setSaveError("Draft not saved. Set the code if asked, then try again.");
+            if (!result.ok) {
+              setSaveError(result.message);
               return;
             }
             router.push(weekListHref(weekId, game.id));
@@ -165,10 +165,10 @@ export default function PickPage({
             const next = nextOpenGame(week, picks, activePlayer, game.id);
             setSaving("next");
             setSaveError(null);
-            const ok = await saveDraft(game.id, weekId, winner, bucket);
+            const result = await saveDraft(game.id, weekId, winner, bucket);
             setSaving(null);
-            if (!ok) {
-              setSaveError("Draft not saved. Set the code if asked, then try again.");
+            if (!result.ok) {
+              setSaveError(result.message);
               return;
             }
             if (!next) {
