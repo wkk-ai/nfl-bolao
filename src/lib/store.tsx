@@ -39,6 +39,7 @@ type StoreValue = {
   weeks: SeedWeek[];
   picks: PickRecord[];
   reactions: Reaction[];
+  scoresUpdatedAt: string | null;
   savePick: (
     gameId: string,
     weekId: number,
@@ -104,10 +105,14 @@ async function loadBoard(player: PlayerId) {
   if (weekRows.length === 0 || gameRows.length === 0) {
     throw new Error("Shared board is empty.");
   }
+  const syncRes = await sb.from("score_sync").select("updated_at").eq("id", 1).maybeSingle();
+  const scoresUpdatedAt =
+    syncRes.error || !syncRes.data?.updated_at ? null : String(syncRes.data.updated_at);
   return {
     weeks: mapWeeks(weekRows as WeekRow[], gameRows as GameRow[]),
     picks: mapPicks((picksRes.data ?? []) as PickRow[]),
     reactions: mapReactions((reactionsRes.data ?? []) as ReactionRow[]),
+    scoresUpdatedAt,
   };
 }
 
@@ -122,6 +127,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [weeks, setWeeks] = useState<SeedWeek[]>(seedWeeks);
   const [picks, setPicks] = useState<PickRecord[]>(seedPicks);
   const [reactions, setReactions] = useState<Reaction[]>(seedReactions);
+  const [scoresUpdatedAt, setScoresUpdatedAt] = useState<string | null>(null);
 
   const playerRef = useRef(activePlayer);
   playerRef.current = activePlayer;
@@ -132,6 +138,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setWeeks(board.weeks);
     setPicks(board.picks);
     setReactions(board.reactions);
+    setScoresUpdatedAt(board.scoresUpdatedAt);
     setError(null);
   }, []);
 
@@ -148,6 +155,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!configured) {
       setPicks(seedPicks);
       setReactions(seedReactions);
+      setScoresUpdatedAt(null);
       setHydrated(true);
       return;
     }
@@ -295,6 +303,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       weeks,
       picks,
       reactions,
+      scoresUpdatedAt,
       savePick,
       addReaction,
     }),
@@ -308,6 +317,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       weeks,
       picks,
       reactions,
+      scoresUpdatedAt,
       savePick,
       addReaction,
       setActivePlayer,

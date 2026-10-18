@@ -15,9 +15,10 @@ import {
   winnerStreak,
 } from "@/lib/compute";
 import { deriveWeekState, weekStateLabel } from "@/lib/week-state";
+import { formatScoresUpdatedAt } from "@/lib/format";
 
 export default function HomePage() {
-  const { ready, weeks, picks, activePlayer, demo } = useStore();
+  const { ready, weeks, picks, activePlayer, demo, scoresUpdatedAt } = useStore();
   if (!ready) return <PageLoading label="Warming up the 2026 slate…" />;
   const week = currentWeek(weeks);
   const ranks = ranked(weeks, picks);
@@ -39,6 +40,9 @@ export default function HomePage() {
       <section className="space-y-2">
         <p className="text-xs font-medium text-zinc-500">Will vs Sara · 2026 regular season · ESPN slate</p>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">The bolão is live.</h1>
+        <p className="text-xs font-medium text-zinc-500">
+          {scoresUpdatedAt ? formatScoresUpdatedAt(scoresUpdatedAt) : "No score update yet"}
+        </p>
         <p className="max-w-2xl text-zinc-300">
           {you.name} sits at {you.pts} pts
           {you.tied ? ", tied with " : you.rank === 1 ? ", leading " : ", chasing "}

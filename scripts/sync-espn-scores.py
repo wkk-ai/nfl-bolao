@@ -79,6 +79,13 @@ def main() -> None:
                 """
             )
             ties = cur.fetchone()[0]
+            cur.execute(
+                """
+                insert into public.score_sync (id, updated_at)
+                values (1, now())
+                on conflict (id) do update set updated_at = excluded.updated_at
+                """
+            )
         conn.commit()
     finally:
         conn.close()
