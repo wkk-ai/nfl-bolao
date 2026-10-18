@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TeamLogo } from "@/components/team-logo";
@@ -12,7 +13,9 @@ import { draftOrPick, gameAnchorId } from "@/lib/compute";
 import { useScrollToGame } from "@/lib/focus-game";
 import { bucketRange } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
+import { formatLockedAt } from "@/lib/format";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function ReviewPage({ params }: { params: Promise<{ week: string }> }) {
   const { week: weekParam } = use(params);
@@ -54,17 +57,30 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
           <Card
             key={game.id}
             id={gameAnchorId(game.id)}
-            className={`scroll-mt-40 scroll-mb-28 flex flex-col gap-3 border-white/10 bg-black/40 p-3 sm:flex-row sm:items-center ${focusId === game.id ? "ring-2 ring-amber-300/80" : ""}`}
+            className={cn(
+              "scroll-mt-40 scroll-mb-28 flex flex-col gap-3 border-white/10 bg-black/40 p-3 sm:flex-row sm:items-center",
+              focusId === game.id && "ring-2 ring-amber-300/80",
+              locked && "opacity-70",
+            )}
           >
             <div className="flex min-w-0 items-center gap-3">
               <TeamLogo abbr={game.awayAbbr} size={32} />
               <span className="text-xs text-zinc-500">@</span>
               <TeamLogo abbr={game.homeAbbr} size={32} />
               <div className="min-w-0 flex-1 text-sm">
-                <div>
-                  {game.awayAbbr} at {game.homeAbbr}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>
+                    {game.awayAbbr} at {game.homeAbbr}
+                  </span>
+                  {locked ? (
+                    <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/40 bg-amber-400/15 px-2 py-0.5 text-xs text-amber-100">
+                      <Lock className="size-3.5" aria-hidden />
+                      Locked
+                    </span>
+                  ) : null}
                 </div>
                 <div className="text-zinc-400">
+                  {locked ? <div>{formatLockedAt(game.kickoff)}</div> : null}
                   {pick
                     ? `${pick.winnerAbbr} · ${bucketRange(pick.marginBucket)}${pick.draft ? " · draft" : " · in"}`
                     : locked

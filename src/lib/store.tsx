@@ -11,7 +11,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import seed from "@/data/seed.json";
-import { PinDialog } from "@/components/pin-dialog";
+import { SitePinGate } from "@/components/site-pin-gate";
+import { dropLegacyPlayerPins, gateRemembered } from "./site-pin";
 import { getSupabase, supabaseConfigured } from "./supabase";
 import {
   mapPicks,
@@ -25,7 +26,6 @@ import {
 import type { MarginBucket, PickRecord, PlayerId, Reaction, SeedWeek } from "./types";
 
 const PLAYER_KEY = "bolao-nfl-2026-player";
-const PIN_KEY = "bolao-nfl-2026-pins";
 const LEGACY_KEY = "bolao-nfl-2026-v2";
 
 export type SaveResult = { ok: true } | { ok: false; message: string };
@@ -61,39 +61,6 @@ function readPlayer(): PlayerId {
   return v === "sara" ? "sara" : "will";
 }
 
-function readPin(player: PlayerId): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
-    const pin = parsed[player];
-    return /^\d{4}$/.test(pin) ? pin : null;
-  } catch {
-    return null;
-  }
-}
-
-function writePin(player: PlayerId, pin: string) {
-  const parsed = (() => {
-    try {
-      return JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
-    } catch {
-      return {};
-    }
-  })();
-  parsed[player] = pin;
-  localStorage.setItem(PIN_KEY, JSON.stringify(parsed));
-}
-
-function clearPin(player: PlayerId) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PIN_KEY) || "{}") as Record<string, string>;
-    delete parsed[player];
-    localStorage.setItem(PIN_KEY, JSON.stringify(parsed));
-  } catch {
-    localStorage.removeItem(PIN_KEY);
-  }
-}
-
 function dropLegacyPracticePicks() {
   try {
     localStorage.removeItem(LEGACY_KEY);
@@ -106,27 +73,10 @@ function rpcMessage(err: { message?: string } | null): string {
   return (err?.message || "").toLowerCase();
 }
 
-function classifyWriteError(err: { message?: string } | null, justSetNewCode: boolean): {
-  kind: "bad_pin" | "kickoff" | "other";
-  message: string;
-} {
+function writeErrorMessage(err: { message?: string } | null): string {
   const msg = rpcMessage(err);
-  if (msg.includes("bad_pin")) {
-    if (justSetNewCode) {
-      return {
-        kind: "other",
-        message: "Could not save after setting the code. Try again.",
-      };
-    }
-    return { kind: "bad_pin", message: "Wrong code. Nothing was saved. Try again." };
-  }
-  if (msg.includes("kickoff_lock")) {
-    return { kind: "kickoff", message: "Kickoff already hit. That pick was not saved." };
-  }
-  if (msg.includes("gen_salt") || msg.includes("crypt") || msg.includes("42883")) {
-    return { kind: "other", message: "Could not save that draft. Try again in a moment." };
-  }
-  return { kind: "other", message: "Could not save that draft." };
+  if (msg.includes("kickoff_lock")) return "Kickoff already hit. That pick was not saved.";
+  return "Could not save that draft.";
 }
 
 function useIsClient() {
@@ -137,27 +87,18 @@ function useIsClient() {
   );
 }
 
-async function loadBoard(player: PlayerId, pin: string | null) {
+async function loadBoard(player: PlayerId) {
   const sb = getSupabase();
   if (!sb) return null;
-  const picksArgs = { p_player: player, p_pin: pin ?? "" };
   const [weeksRes, gamesRes, picksRes, reactionsRes] = await Promise.all([
     sb.from("weeks").select("id,season,label,state").order("id"),
     sb.from("games").select(
       "id,week_id,kickoff,home_abbr,away_abbr,home_name,away_name,home_score,away_score,status,winner_abbr,margin,margin_bucket,venue",
     ),
-    sb.rpc("visible_picks", picksArgs),
+    sb.rpc("visible_picks", { p_player: player }),
     sb.from("reactions").select("id,from_player_id,to_player_id,week_id,emoji,body").order("created_at"),
   ]);
-  let pickRows = picksRes.data;
-  let pickErr = picksRes.error;
-  if (pickErr && rpcMessage(pickErr).includes("bad_pin")) {
-    clearPin(player);
-    const retry = await sb.rpc("visible_picks", { p_player: player, p_pin: "" });
-    pickErr = retry.error;
-    pickRows = retry.data;
-  }
-  const err = weeksRes.error || gamesRes.error || pickErr || reactionsRes.error;
+  const err = weeksRes.error || gamesRes.error || picksRes.error || reactionsRes.error;
   if (err) throw new Error(err.message);
   const weekRows = weeksRes.data ?? [];
   const gameRows = gamesRes.data ?? [];
@@ -166,84 +107,30 @@ async function loadBoard(player: PlayerId, pin: string | null) {
   }
   return {
     weeks: mapWeeks(weekRows as WeekRow[], gameRows as GameRow[]),
-    picks: mapPicks((pickRows ?? []) as PickRow[]),
+    picks: mapPicks((picksRes.data ?? []) as PickRow[]),
     reactions: mapReactions((reactionsRes.data ?? []) as ReactionRow[]),
   };
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const ready = useIsClient();
+  const client = useIsClient();
   const configured = supabaseConfigured();
+  const [unlocked, setUnlocked] = useState(false);
+  const [gateChecked, setGateChecked] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activePlayer, setActivePlayerState] = useState<PlayerId>("will");
   const [weeks, setWeeks] = useState<SeedWeek[]>(seedWeeks);
   const [picks, setPicks] = useState<PickRecord[]>(seedPicks);
   const [reactions, setReactions] = useState<Reaction[]>(seedReactions);
-  const [pinOpen, setPinOpen] = useState(false);
-  const [pinMode, setPinMode] = useState<"set" | "enter">("set");
-  const [pinError, setPinError] = useState<string | null>(null);
-  const [pinBusy, setPinBusy] = useState(false);
-  const pinResolver = useRef<(pin: string | null) => void>(() => {});
 
   const weeksRef = useRef(weeks);
   const playerRef = useRef(activePlayer);
   weeksRef.current = weeks;
   playerRef.current = activePlayer;
 
-  const waitForPin = useCallback(() => {
-    return new Promise<string | null>((resolve) => {
-      pinResolver.current = resolve;
-    });
-  }, []);
-
-  const askPin = useCallback(
-    (mode: "set" | "enter") => {
-      setPinMode(mode);
-      setPinError(null);
-      setPinBusy(false);
-      setPinOpen(true);
-      return waitForPin();
-    },
-    [waitForPin],
-  );
-
-  const dismissPin = useCallback(() => {
-    setPinOpen(false);
-    setPinBusy(false);
-    setPinError(null);
-  }, []);
-
-  const onPinSubmit = useCallback((pin: string) => {
-    setPinBusy(true);
-    setPinError(null);
-    pinResolver.current(pin);
-  }, []);
-
-  const onPinCancel = useCallback(() => {
-    setPinOpen(false);
-    setPinBusy(false);
-    pinResolver.current(null);
-  }, []);
-
-  const pinForWrite = useCallback(
-    async (player: PlayerId) => {
-      const existing = readPin(player);
-      const sb = getSupabase();
-      if (!sb) return { pin: existing, mode: existing ? ("cached" as const) : ("set" as const) };
-      const { data } = await sb.rpc("has_pin", { p_player: player });
-      const has = Boolean(data);
-      if (existing) return { pin: existing, mode: "cached" as const };
-      const mode = has ? ("enter" as const) : ("set" as const);
-      const pin = await askPin(mode);
-      return { pin, mode };
-    },
-    [askPin],
-  );
-
   const refresh = useCallback(async () => {
-    const player = playerRef.current;
-    const board = await loadBoard(player, readPin(player));
+    const board = await loadBoard(playerRef.current);
     if (!board) return;
     setWeeks(board.weeks);
     setPicks(board.picks);
@@ -253,7 +140,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     dropLegacyPracticePicks();
+    dropLegacyPlayerPins();
     setActivePlayerState(readPlayer());
+    setUnlocked(gateRemembered());
+    setGateChecked(true);
+  }, []);
+
+  useEffect(() => {
+    if (!gateChecked || !unlocked) return;
     if (!configured) {
       setPicks(seedPicks);
       setReactions(seedReactions);
@@ -273,7 +167,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [configured, refresh]);
+  }, [configured, gateChecked, refresh, unlocked]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -286,7 +180,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [activePlayer, configured, hydrated, refresh]);
 
   useEffect(() => {
-    if (!configured) return;
+    if (!configured || !unlocked) return;
     const sb = getSupabase();
     if (!sb) return;
     let cancelled = false;
@@ -298,13 +192,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
     const poll = window.setInterval(() => {
       if (!cancelled) void refresh();
-    }, 20000);
+    }, 15000);
     return () => {
       cancelled = true;
       window.clearInterval(poll);
       void sb.removeChannel(channel);
     };
-  }, [configured, refresh]);
+  }, [configured, refresh, unlocked]);
 
   const setActivePlayer = useCallback((id: PlayerId) => {
     setActivePlayerState(id);
@@ -331,56 +225,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       const sb = getSupabase();
       if (!sb) return { ok: false, message: "Could not reach the shared board." };
-
-      let { pin, mode } = await pinForWrite(activePlayer);
-      while (true) {
-        if (!pin) {
-          dismissPin();
-          return { ok: false, message: "Draft not saved. Enter the 4-digit code, then try again." };
-        }
-        const justSet = mode === "set";
-        const { error: err } = await sb.rpc("save_picks", {
-          p_player: activePlayer,
-          p_pin: pin,
-          p_picks: [
-            {
-              game_id: gameId,
-              week_id: weekId,
-              winner_abbr: winnerAbbr,
-              margin_bucket: marginBucket,
-            },
-          ],
-          p_submit: false,
-        });
-        if (!err) {
-          writePin(activePlayer, pin);
-          dismissPin();
-          setPicks((prev) => {
-            const next = prev.filter((p) => !(p.playerId === activePlayer && p.gameId === gameId));
-            next.push(row);
-            return next;
-          });
-          setError(null);
-          return { ok: true };
-        }
-        const classified = classifyWriteError(err, justSet);
-        clearPin(activePlayer);
-        if (classified.kind === "bad_pin") {
-          pin = null;
-          mode = "enter";
-          setPinBusy(false);
-          setPinMode("enter");
-          setPinError(classified.message);
-          setPinOpen(true);
-          pin = await waitForPin();
-          continue;
-        }
-        dismissPin();
-        setError(classified.message);
-        return { ok: false, message: classified.message };
+      const { error: err } = await sb.rpc("save_picks", {
+        p_player: activePlayer,
+        p_picks: [
+          {
+            game_id: gameId,
+            week_id: weekId,
+            winner_abbr: winnerAbbr,
+            margin_bucket: marginBucket,
+          },
+        ],
+        p_submit: false,
+      });
+      if (err) {
+        const message = writeErrorMessage(err);
+        setError(message);
+        return { ok: false, message };
       }
+      setPicks((prev) => {
+        const next = prev.filter((p) => !(p.playerId === activePlayer && p.gameId === gameId));
+        next.push(row);
+        return next;
+      });
+      setError(null);
+      return { ok: true };
     },
-    [activePlayer, configured, dismissPin, pinForWrite, waitForPin],
+    [activePlayer, configured],
   );
 
   const submitWeek = useCallback(
@@ -401,63 +271,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       const sb = getSupabase();
       if (!sb) return { ok: false, message: "Could not reach the shared board." };
-
-      let { pin, mode } = await pinForWrite(activePlayer);
-      while (true) {
-        if (!pin) {
-          dismissPin();
-          return { ok: false, message: "Submit did not land. Enter the 4-digit code, then try again." };
-        }
-        const justSet = mode === "set";
-        const { error: err } = await sb.rpc("submit_week", {
-          p_player: activePlayer,
-          p_pin: pin,
-          p_week: weekId,
-        });
-        if (!err) {
-          writePin(activePlayer, pin);
-          dismissPin();
-          setPicks((prev) =>
-            prev.map((p) =>
-              p.playerId === activePlayer && weekGameIds.has(p.gameId) && !p.draft
-                ? p
-                : p.playerId === activePlayer && weekGameIds.has(p.gameId)
-                  ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
-                  : p,
-            ),
-          );
-          setError(null);
-          try {
-            await refresh();
-          } catch {
-            /* local stamp already applied */
-          }
-          return { ok: true };
-        }
-        const classified = classifyWriteError(err, justSet);
-        const message =
-          classified.kind === "bad_pin"
-            ? "Wrong code. The card was not submitted. Try again."
-            : classified.kind === "kickoff"
-              ? classified.message
-              : "Could not submit that card.";
-        clearPin(activePlayer);
-        if (classified.kind === "bad_pin") {
-          pin = null;
-          mode = "enter";
-          setPinBusy(false);
-          setPinMode("enter");
-          setPinError(message);
-          setPinOpen(true);
-          pin = await waitForPin();
-          continue;
-        }
-        dismissPin();
+      const { error: err } = await sb.rpc("submit_week", {
+        p_player: activePlayer,
+        p_week: weekId,
+      });
+      if (err) {
+        const message = rpcMessage(err).includes("kickoff_lock")
+          ? "Kickoff already hit. The card was not submitted."
+          : "Could not submit that card.";
         setError(message);
         return { ok: false, message };
       }
+      setPicks((prev) =>
+        prev.map((p) =>
+          p.playerId === activePlayer && weekGameIds.has(p.gameId) && !p.draft
+            ? p
+            : p.playerId === activePlayer && weekGameIds.has(p.gameId)
+              ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
+              : p,
+        ),
+      );
+      setError(null);
+      try {
+        await refresh();
+      } catch {
+        /* local stamp already applied */
+      }
+      return { ok: true };
     },
-    [activePlayer, configured, dismissPin, pinForWrite, refresh, waitForPin],
+    [activePlayer, configured, refresh],
   );
 
   const addReaction = useCallback(
@@ -492,7 +334,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<StoreValue>(
     () => ({
-      ready: ready && hydrated,
+      ready: client && hydrated && unlocked,
       demo: !configured,
       error,
       activePlayer,
@@ -505,8 +347,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addReaction,
     }),
     [
-      ready,
+      client,
       hydrated,
+      unlocked,
       configured,
       error,
       activePlayer,
@@ -520,20 +363,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return (
-    <Ctx.Provider value={value}>
-      {children}
-      <PinDialog
-        open={pinOpen}
-        player={activePlayer}
-        mode={pinMode}
-        error={pinError}
-        busy={pinBusy}
-        onSubmit={onPinSubmit}
-        onCancel={onPinCancel}
-      />
-    </Ctx.Provider>
-  );
+  if (!client || !gateChecked) {
+    return (
+      <Ctx.Provider value={value}>
+        <div className="min-h-dvh bg-[var(--turf)]" />
+      </Ctx.Provider>
+    );
+  }
+
+  if (!unlocked) {
+    return <SitePinGate onUnlock={() => setUnlocked(true)} />;
+  }
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useStore() {

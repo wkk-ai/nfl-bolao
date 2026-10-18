@@ -10,7 +10,9 @@ import { useStore } from "@/lib/store";
 import { pickFor, weekHasStarted, weekPoints, weeklyAwards } from "@/lib/compute";
 import { bucketRange, scorePick } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
+import { formatLockedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 
 export default function ResultsPage({ params }: { params: Promise<{ week: string }> }) {
   const { week: weekParam } = use(params);
@@ -71,7 +73,13 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
         {week.games.map((game) => {
           const actual = game.marginBucket;
           return (
-            <Card key={game.id} className="border-white/10 bg-black/40 p-4">
+            <Card
+              key={game.id}
+              className={cn(
+                "border-white/10 bg-black/40 p-4",
+                game.status !== "final" && gameLocked(game) && "opacity-70",
+              )}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TeamLogo abbr={game.awayAbbr} size={32} />
@@ -90,6 +98,14 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
                           : "Tie"}
                       </div>
                     </>
+                  ) : gameLocked(game) ? (
+                    <div className="text-amber-100">
+                      <span className="inline-flex items-center gap-1">
+                        <Lock className="size-3.5" aria-hidden />
+                        Locked
+                      </span>
+                      <div className="text-xs text-zinc-400">{formatLockedAt(game.kickoff)}</div>
+                    </div>
                   ) : (
                     <div className="text-zinc-500">Not final</div>
                   )}

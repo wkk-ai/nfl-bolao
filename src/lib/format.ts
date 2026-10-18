@@ -21,6 +21,15 @@ export function formatKickoffShort(iso: string): string {
   }).format(d);
 }
 
+export function formatLockedAt(iso: string): string {
+  const t = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  }).format(new Date(iso));
+  return `Locked at ${t}`;
+}
+
 export function otherPlayer(id: "will" | "sara"): "will" | "sara" {
   return id === "will" ? "sara" : "will";
 }

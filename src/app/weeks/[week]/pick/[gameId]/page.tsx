@@ -10,7 +10,7 @@ import { ErrorState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { bucketCopy, bucketRange, MARGIN_BUCKETS } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
-import { formatKickoff } from "@/lib/format";
+import { formatKickoff, formatLockedAt } from "@/lib/format";
 import { draftOrPick, nextOpenGame, weekListHref } from "@/lib/compute";
 import type { MarginBucket } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -51,9 +51,9 @@ export default function PickPage({
   if (locked) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">This one’s locked</h1>
+        <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">This game is locked</h1>
         <p className="text-zinc-400">
-          Kickoff was {formatKickoff(game.kickoff)}. You cannot change a pick after the ball is in the air.
+          {formatLockedAt(game.kickoff)}. You cannot change a pick after the ball is in the air.
         </p>
         <ButtonLink href={`/weeks/${weekId}`}>Back to matchups</ButtonLink>
       </div>

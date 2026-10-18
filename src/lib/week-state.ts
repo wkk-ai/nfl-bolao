@@ -1,8 +1,12 @@
 import { isKickoffLocked } from "./scoring";
 import type { SeedGame, SeedWeek, WeekState } from "./types";
 
+const STILL_OPENABLE = new Set(["scheduled", "upcoming", "pre", "preview"]);
+
 export function gameLocked(game: SeedGame, now = new Date()): boolean {
-  return game.status === "final" || isKickoffLocked(game.kickoff, now);
+  if (game.status && !STILL_OPENABLE.has(game.status)) return true;
+  if (game.homeScore != null || game.awayScore != null) return true;
+  return isKickoffLocked(game.kickoff, now);
 }
 
 export function deriveWeekState(week: SeedWeek, now = new Date()): WeekState {

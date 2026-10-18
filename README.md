@@ -1,6 +1,6 @@
 # Bolão NFL 2026 — Will vs Sara
 
-A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. Use **I’m Will** or **I’m Sara** at the top. The first save on a phone sets a 4-digit code for that person. Each person’s card is separate.
+A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. The site asks for the house PIN once per browser, then remembers it. Use **I’m Will** or **I’m Sara** after that. Each person’s card is separate. Games lock at kickoff.
 
 This is not a money site. It is the house board for one bolão.
 

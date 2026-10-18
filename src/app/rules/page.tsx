@@ -9,8 +9,8 @@ export default function RulesPage() {
       <div>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">House rules</h1>
         <p className="text-zinc-400">
-          Two chairs. Will and Sara. Switch the name at the top. The first save on a phone sets a 4-digit code for that
-          person. Later saves from that phone reuse it.
+          Two chairs. Will and Sara. This browser asks for the house PIN once, then remembers it. Switch I’m Will / I’m
+          Sara at the top after that.
         </p>
       </div>
       <Card className="border-white/10 bg-black/40 p-5 space-y-3 text-sm leading-6 text-zinc-300">
