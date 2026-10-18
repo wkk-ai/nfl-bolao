@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +33,12 @@ export default function PickPage({
   const existing = game ? pickFor(picks, activePlayer, game.id) : undefined;
   const [winner, setWinner] = useState<string | undefined>(existing?.winnerAbbr);
   const [bucket, setBucket] = useState<MarginBucket | undefined>(existing?.marginBucket);
+
+  useEffect(() => {
+    if (!existing) return;
+    setWinner((w) => w ?? existing.winnerAbbr);
+    setBucket((b) => b ?? existing.marginBucket);
+  }, [existing]);
 
   const locked = game ? gameLocked(game) : true;
   const step = winner ? 2 : 1;
@@ -172,7 +178,7 @@ export default function PickPage({
         </Button>
         <p className="w-full text-sm text-zinc-400">
           Save pick writes this call now. Save and next jumps to the next blank game. You can still change it until
-          kickoff.
+          the lock.
         </p>
         {saveError ? <p className="w-full text-sm text-red-300">{saveError}</p> : null}
         <ButtonLink href={weekListHref(weekId, game.id)} variant="ghost" className="h-12 min-h-12 w-full md:w-auto">
