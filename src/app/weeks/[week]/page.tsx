@@ -36,7 +36,7 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <ButtonLink href={`/weeks/${weekId}/review`} variant="secondary" className="w-full sm:w-auto">
-            Review card
+            My card
           </ButtonLink>
           <ButtonLink href={`/weeks/${weekId}/results`} variant="outline" className="w-full sm:w-auto">
             Reveal
@@ -57,7 +57,7 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           }
         />
       ) : (
-        <EmptyState title="Nothing left open" body="Either lock already hit, or your card is full. Review it before you walk away." />
+        <EmptyState title="Nothing left open" body="Either lock already hit, or your card is full. You can still change an open pick until kickoff." />
       )}
       {state === "final" ? (
         <p className="text-sm text-zinc-300">

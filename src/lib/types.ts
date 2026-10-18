@@ -43,7 +43,6 @@ export type PickRecord = {
   winnerAbbr: string;
   marginBucket: MarginBucket;
   submittedAt: string | null;
-  draft?: boolean;
 };
 
 export type Reaction = {

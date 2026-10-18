@@ -11,7 +11,7 @@ import { useStore } from "@/lib/store";
 import { bucketCopy, bucketRange, MARGIN_BUCKETS } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
 import { formatKickoff, formatLockedAt } from "@/lib/format";
-import { draftOrPick, nextOpenGame, weekListHref } from "@/lib/compute";
+import { nextOpenGame, pickFor, weekListHref } from "@/lib/compute";
 import type { MarginBucket } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { teamMeta } from "@/lib/teams";
@@ -25,12 +25,12 @@ export default function PickPage({
   const { week: weekParam, gameId } = use(params);
   const weekId = Number(weekParam);
   const router = useRouter();
-  const { ready, weeks, picks, activePlayer, saveDraft } = useStore();
-  const [saving, setSaving] = useState<"draft" | "next" | null>(null);
+  const { ready, weeks, picks, activePlayer, savePick } = useStore();
+  const [saving, setSaving] = useState<"pick" | "next" | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const week = weeks.find((w) => w.id === weekId);
   const game = week?.games.find((g) => g.id === gameId);
-  const existing = game ? draftOrPick(picks, activePlayer, game.id) : undefined;
+  const existing = game ? pickFor(picks, activePlayer, game.id) : undefined;
   const [winner, setWinner] = useState<string | undefined>(existing?.winnerAbbr);
   const [bucket, setBucket] = useState<MarginBucket | undefined>(existing?.marginBucket);
 
@@ -58,6 +58,23 @@ export default function PickPage({
         <ButtonLink href={`/weeks/${weekId}`}>Back to matchups</ButtonLink>
       </div>
     );
+  }
+
+  async function persist(mode: "pick" | "next") {
+    if (!winner || !bucket || saving || !week || !game) return;
+    const next = mode === "next" ? nextOpenGame(week, picks, activePlayer, game.id) : undefined;
+    setSaving(mode);
+    setSaveError(null);
+    const result = await savePick(game.id, weekId, winner, bucket);
+    setSaving(null);
+    if (!result.ok) {
+      setSaveError(result.message);
+      return;
+    }
+    toast.success("Saved");
+    if (mode === "next" && next) {
+      router.push(`/weeks/${weekId}/pick/${next.id}`);
+    }
   }
 
   return (
@@ -141,48 +158,21 @@ export default function PickPage({
         <Button
           disabled={!winner || !bucket || saving !== null}
           className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 md:w-auto"
-          onClick={async () => {
-            if (!winner || !bucket || saving) return;
-            setSaving("draft");
-            setSaveError(null);
-            const result = await saveDraft(game.id, weekId, winner, bucket);
-            setSaving(null);
-            if (!result.ok) {
-              setSaveError(result.message);
-              return;
-            }
-            router.push(weekListHref(weekId, game.id));
-          }}
+          onClick={() => void persist("pick")}
         >
-          {saving === "draft" ? "Saving draft…" : "Save as draft"}
+          {saving === "pick" ? "Saving…" : "Save pick"}
         </Button>
         <Button
           disabled={!winner || !bucket || saving !== null}
           variant="secondary"
           className="h-12 min-h-12 w-full border border-amber-300/40 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20 md:w-auto"
-          onClick={async () => {
-            if (!winner || !bucket || saving) return;
-            const next = nextOpenGame(week, picks, activePlayer, game.id);
-            setSaving("next");
-            setSaveError(null);
-            const result = await saveDraft(game.id, weekId, winner, bucket);
-            setSaving(null);
-            if (!result.ok) {
-              setSaveError(result.message);
-              return;
-            }
-            if (!next) {
-              toast.message("No next open game. Back on this match.");
-              router.push(weekListHref(weekId, game.id));
-              return;
-            }
-            router.push(`/weeks/${weekId}/pick/${next.id}`);
-          }}
+          onClick={() => void persist("next")}
         >
           {saving === "next" ? "Saving…" : "Save and next"}
         </Button>
         <p className="w-full text-sm text-zinc-400">
-          This is still a draft. It counts only after you submit the card. Save and next jumps to the next blank game.
+          Save pick writes this call now. Save and next jumps to the next blank game. You can still change it until
+          kickoff.
         </p>
         {saveError ? <p className="w-full text-sm text-red-300">{saveError}</p> : null}
         <ButtonLink href={weekListHref(weekId, game.id)} variant="ghost" className="h-12 min-h-12 w-full md:w-auto">

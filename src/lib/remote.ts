@@ -88,7 +88,6 @@ export function mapPicks(rows: PickRow[]): PickRecord[] {
     winnerAbbr: row.winner_abbr,
     marginBucket: row.margin_bucket,
     submittedAt: row.submitted_at,
-    draft: !row.submitted_at,
   }));
 }
 
@@ -110,6 +109,6 @@ export function pickToRow(pick: PickRecord) {
     week_id: pick.weekId,
     winner_abbr: pick.winnerAbbr,
     margin_bucket: pick.marginBucket,
-    submitted_at: pick.draft ? null : pick.submittedAt,
+    submitted_at: pick.submittedAt,
   };
 }

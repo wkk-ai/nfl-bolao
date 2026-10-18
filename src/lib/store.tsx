@@ -39,13 +39,12 @@ type StoreValue = {
   weeks: SeedWeek[];
   picks: PickRecord[];
   reactions: Reaction[];
-  saveDraft: (
+  savePick: (
     gameId: string,
     weekId: number,
     winnerAbbr: string,
     marginBucket: MarginBucket,
   ) => Promise<SaveResult>;
-  submitWeek: (weekId: number) => Promise<SaveResult>;
   addReaction: (weekId: number, emoji: string, body: string) => void;
 };
 
@@ -76,7 +75,7 @@ function rpcMessage(err: { message?: string } | null): string {
 function writeErrorMessage(err: { message?: string } | null): string {
   const msg = rpcMessage(err);
   if (msg.includes("kickoff_lock")) return "Kickoff already hit. That pick was not saved.";
-  return "Could not save that draft.";
+  return "Could not save that pick.";
 }
 
 function useIsClient() {
@@ -124,9 +123,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [picks, setPicks] = useState<PickRecord[]>(seedPicks);
   const [reactions, setReactions] = useState<Reaction[]>(seedReactions);
 
-  const weeksRef = useRef(weeks);
   const playerRef = useRef(activePlayer);
-  weeksRef.current = weeks;
   playerRef.current = activePlayer;
 
   const refresh = useCallback(async () => {
@@ -204,16 +201,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setActivePlayerState(id);
   }, []);
 
-  const saveDraft = useCallback(
+  const savePick = useCallback(
     async (gameId: string, weekId: number, winnerAbbr: string, marginBucket: MarginBucket): Promise<SaveResult> => {
+      const now = new Date().toISOString();
       const row: PickRecord = {
         playerId: activePlayer,
         gameId,
         weekId,
         winnerAbbr,
         marginBucket,
-        submittedAt: null,
-        draft: true,
+        submittedAt: now,
       };
       if (!configured) {
         setPicks((prev) => {
@@ -235,7 +232,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             margin_bucket: marginBucket,
           },
         ],
-        p_submit: false,
+        p_submit: true,
       });
       if (err) {
         const message = writeErrorMessage(err);
@@ -247,50 +244,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         next.push(row);
         return next;
       });
-      setError(null);
-      return { ok: true };
-    },
-    [activePlayer, configured],
-  );
-
-  const submitWeek = useCallback(
-    async (weekId: number): Promise<SaveResult> => {
-      const now = new Date().toISOString();
-      const weekGameIds = new Set(
-        weeksRef.current.find((w) => w.id === weekId)?.games.map((g) => g.id) ?? [],
-      );
-      if (!configured) {
-        setPicks((prev) =>
-          prev.map((p) =>
-            p.playerId === activePlayer && weekGameIds.has(p.gameId)
-              ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
-              : p,
-          ),
-        );
-        return { ok: true };
-      }
-      const sb = getSupabase();
-      if (!sb) return { ok: false, message: "Could not reach the shared board." };
-      const { error: err } = await sb.rpc("submit_week", {
-        p_player: activePlayer,
-        p_week: weekId,
-      });
-      if (err) {
-        const message = rpcMessage(err).includes("kickoff_lock")
-          ? "Kickoff already hit. The card was not submitted."
-          : "Could not submit that card.";
-        setError(message);
-        return { ok: false, message };
-      }
-      setPicks((prev) =>
-        prev.map((p) =>
-          p.playerId === activePlayer && weekGameIds.has(p.gameId) && !p.draft
-            ? p
-            : p.playerId === activePlayer && weekGameIds.has(p.gameId)
-              ? { ...p, draft: false, submittedAt: p.submittedAt ?? now }
-              : p,
-        ),
-      );
       setError(null);
       try {
         await refresh();
@@ -342,8 +295,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       weeks,
       picks,
       reactions,
-      saveDraft,
-      submitWeek,
+      savePick,
       addReaction,
     }),
     [
@@ -356,8 +308,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       weeks,
       picks,
       reactions,
-      saveDraft,
-      submitWeek,
+      savePick,
       addReaction,
       setActivePlayer,
     ],

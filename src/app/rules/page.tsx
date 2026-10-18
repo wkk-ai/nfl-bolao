@@ -44,6 +44,7 @@ export default function RulesPage() {
         </p>
         <h2 className="text-xl font-medium text-amber-200">Locks</h2>
         <p>
+          Saving a pick is final right away. There is no extra submit step. You can still change that pick until kickoff.
           Each game locks at its own kickoff, in the database, not just on the screen. After kickoff, picks cannot be added
           or changed. You can still pick later games in the same week. A blank after lock is a zero for that game. The other
           chair’s pick stays hidden until that game kicks off.

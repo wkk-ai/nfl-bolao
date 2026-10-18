@@ -1,6 +1,6 @@
 # Bolão NFL 2026 — Will vs Sara
 
-A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. The site asks for the house PIN once per browser, then remembers it. Use **I’m Will** or **I’m Sara** after that. Each person’s card is separate. Games lock at kickoff.
+A two-person NFL pool for the 2026 season. Will and Sara pick a winner and a winning margin (5 / 10 / 15 / 20) for every game. The site asks for the house PIN once per browser, then remembers it. Use **I’m Will** or **I’m Sara** after that. Each person’s card is separate. Every save counts immediately. Games lock at kickoff.
 
 This is not a money site. It is the house board for one bolão.
 
@@ -58,6 +58,6 @@ GitHub Action `.github/workflows/espn-scores.yml` reads ESPN once a day (and whe
 
 ## What is in the app
 
-Home, season weeks, matchups, pick (winner then margin), review, confirmation, leaderboard, week reveal, Will and Sara pages, history, rules, badges. Head-to-head meter, season chart, streaks, weekly awards, trash-talk chips, unpicked reminders, kickoff locks, team logos/colors.
+Home, season weeks, matchups, pick (winner then margin), my card, leaderboard, week reveal, Will and Sara pages, history, rules, badges. Head-to-head meter, season chart, streaks, weekly awards, trash-talk chips, unpicked reminders, kickoff locks, team logos/colors.
 
 Inspired by Superbru, ESPN Pigskin Pick’em, Yahoo Pick’em, office-pool boards, and Brazilian bolão culture — built as one working two-player board, not a generic dashboard.

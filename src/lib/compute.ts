@@ -35,16 +35,7 @@ export function pickFor(
   playerId: PlayerId,
   gameId: string,
 ): PickRecord | undefined {
-  return picks.find((p) => p.playerId === playerId && p.gameId === gameId && !p.draft);
-}
-
-export function draftOrPick(
-  picks: PickRecord[],
-  playerId: PlayerId,
-  gameId: string,
-): PickRecord | undefined {
-  const draft = picks.find((p) => p.playerId === playerId && p.gameId === gameId && p.draft);
-  return draft ?? pickFor(picks, playerId, gameId);
+  return picks.find((p) => p.playerId === playerId && p.gameId === gameId);
 }
 
 export function weekHasStarted(week: SeedWeek, now = new Date()): boolean {
@@ -58,7 +49,7 @@ function pickVisibleTo(
   viewer: PlayerId,
   now: Date,
 ): PickRecord | undefined {
-  if (owner === viewer) return draftOrPick(picks, owner, game.id);
+  if (owner === viewer) return pickFor(picks, owner, game.id);
   if (!gameLocked(game, now)) return undefined;
   return pickFor(picks, owner, game.id);
 }
@@ -143,7 +134,7 @@ export function unpickedOpenGames(
 ): SeedGame[] {
   return week.games.filter((g) => {
     if (gameLocked(g, now)) return false;
-    const p = draftOrPick(picks, playerId, g.id);
+    const p = pickFor(picks, playerId, g.id);
     return !p;
   });
 }

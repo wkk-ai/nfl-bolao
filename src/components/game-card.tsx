@@ -88,7 +88,6 @@ export function GameCard({
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           <span className={cn("rounded-md px-2 py-1", pick ? "bg-amber-400/15 text-amber-200" : "bg-white/5 text-zinc-500")}>
             You: {pick ? `${pick.winnerAbbr} · ${bucketRange(pick.marginBucket)}` : "no pick"}
-            {pick?.draft ? " (draft)" : ""}
           </span>
           <span className="rounded-md bg-white/5 px-2 py-1 text-zinc-400">
             {playerId === "will" ? "Sara" : "Will"}:{" "}
