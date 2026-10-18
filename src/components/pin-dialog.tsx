@@ -29,10 +29,6 @@ export function PinDialog({
     if (open) setPin("");
   }, [open, player, mode]);
 
-  useEffect(() => {
-    if (!busy && error) setPin("");
-  }, [busy, error]);
-
   if (!open) return null;
 
   return (
@@ -42,7 +38,9 @@ export function PinDialog({
         onSubmit={(e) => {
           e.preventDefault();
           if (!/^\d{4}$/.test(pin) || busy) return;
-          onSubmit(pin);
+          const value = pin;
+          setPin("");
+          onSubmit(value);
         }}
       >
         <h2 className="text-lg font-medium text-amber-200">
