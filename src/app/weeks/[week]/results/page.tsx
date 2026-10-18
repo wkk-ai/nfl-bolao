@@ -40,6 +40,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
           }
         />
         <ButtonLink href={`/weeks/${weekId}`}>Matchups</ButtonLink>
+        <div className="h-24 md:hidden" aria-hidden />
       </div>
     );
   }
@@ -154,6 +155,7 @@ export default function ResultsPage({ params }: { params: Promise<{ week: string
         })}
       </div>
       <ReactionBar weekId={weekId} from={activePlayer} />
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

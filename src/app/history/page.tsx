@@ -44,6 +44,7 @@ export default function HistoryPage() {
           );
         })}
       </div>
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

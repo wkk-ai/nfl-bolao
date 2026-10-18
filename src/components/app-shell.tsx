@@ -78,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="relative mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-5 pb-36 sm:px-4 md:pb-10">
+      <main className="relative mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-5 pb-[calc(10rem+env(safe-area-inset-bottom))] sm:px-4 md:pb-10">
         {error ? (
           <p className="mb-4 rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-100">
             {error}

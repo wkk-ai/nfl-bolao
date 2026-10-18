@@ -12,6 +12,23 @@ import { gameAnchorId, type GameView } from "@/lib/compute";
 import type { PlayerId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+function TeamBlock({
+  abbr,
+  name,
+  align = "left",
+}: {
+  abbr: string;
+  name: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <div className={cn("min-w-0 flex-1", align === "right" && "text-right")}>
+      <div className="font-medium">{abbr}</div>
+      <div className="text-xs leading-snug break-words text-zinc-500">{name}</div>
+    </div>
+  );
+}
+
 export function GameCard({
   game,
   weekId,
@@ -28,12 +45,13 @@ export function GameCard({
   const home = teamMeta(game.homeAbbr);
   const locked = game.locked;
   const final = game.status === "final";
+  const hasScore = final || game.homeScore != null || game.awayScore != null;
   const href = locked ? `/weeks/${weekId}/results` : `/weeks/${weekId}/pick/${game.id}`;
   return (
     <Card
       id={gameAnchorId(game.id)}
       className={cn(
-        "scroll-mt-40 scroll-mb-28 overflow-hidden border-white/10 bg-black/40",
+        "scroll-mt-40 scroll-mb-32 overflow-visible border-white/10 bg-black/40",
         focused && "ring-2 ring-amber-300/80",
         locked && !final && "opacity-70",
       )}
@@ -60,16 +78,30 @@ export function GameCard({
             </Badge>
           )}
         </div>
-        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="mt-3 space-y-2 md:hidden">
+          <div className="flex items-start gap-2">
+            <TeamLogo abbr={game.awayAbbr} className="shrink-0" />
+            <TeamBlock abbr={game.awayAbbr} name={game.awayName} />
+            {hasScore ? (
+              <span className="shrink-0 text-lg font-medium tabular-nums">{game.awayScore ?? "–"}</span>
+            ) : null}
+          </div>
+          <p className="pl-12 text-[11px] text-zinc-500">at</p>
+          <div className="flex items-start gap-2">
+            <TeamLogo abbr={game.homeAbbr} className="shrink-0" />
+            <TeamBlock abbr={game.homeAbbr} name={game.homeName} />
+            {hasScore ? (
+              <span className="shrink-0 text-lg font-medium tabular-nums">{game.homeScore ?? "–"}</span>
+            ) : null}
+          </div>
+        </div>
+        <div className="mt-3 hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 md:grid">
           <div className="flex min-w-0 items-center gap-2">
             <TeamLogo abbr={game.awayAbbr} className="shrink-0" />
-            <div className="min-w-0">
-              <div className="font-medium">{game.awayAbbr}</div>
-              <div className="text-xs leading-tight text-zinc-500">{game.awayName}</div>
-            </div>
+            <TeamBlock abbr={game.awayAbbr} name={game.awayName} />
           </div>
           <div className="px-1 text-center text-lg font-medium tabular-nums">
-            {final || game.homeScore != null || game.awayScore != null ? (
+            {hasScore ? (
               <span>
                 {game.awayScore ?? "–"}–{game.homeScore ?? "–"}
               </span>
@@ -77,11 +109,8 @@ export function GameCard({
               <span className="text-zinc-500">@</span>
             )}
           </div>
-          <div className="flex min-w-0 items-center justify-end gap-2 text-right">
-            <div className="min-w-0">
-              <div className="font-medium">{game.homeAbbr}</div>
-              <div className="text-xs leading-tight text-zinc-500">{game.homeName}</div>
-            </div>
+          <div className="flex min-w-0 items-center justify-end gap-2">
+            <TeamBlock abbr={game.homeAbbr} name={game.homeName} align="right" />
             <TeamLogo abbr={game.homeAbbr} className="shrink-0" />
           </div>
         </div>

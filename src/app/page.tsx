@@ -100,6 +100,7 @@ export default function HomePage() {
           {you.name}’s page
         </ButtonLink>
       </div>
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

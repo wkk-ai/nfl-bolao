@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { deriveWeekState, weekStateLabel } from "@/lib/week-state";
-import { pickFor, weekPoints } from "@/lib/compute";
+import { pickFor, weekPoints, weekScoreCap } from "@/lib/compute";
 
 export default function WeeksPage() {
-  const { ready, weeks, picks, activePlayer } = useStore();
+  const { ready, weeks, picks } = useStore();
   if (!ready) return <PageLoading />;
   const seasonWeeks = weeks.length || 18;
   return (
@@ -24,9 +24,13 @@ export default function WeeksPage() {
       <div className="grid gap-3 md:grid-cols-2">
         {weeks.map((week) => {
           const state = deriveWeekState(week);
-          const pts = weekPoints(week, picks, activePlayer);
-          const hadPick = week.games.some((g) => pickFor(picks, activePlayer, g.id));
-          const missed = (state === "final" || state === "locked") && !hadPick;
+          const willPts = weekPoints(week, picks, "will");
+          const saraPts = weekPoints(week, picks, "sara");
+          const cap = weekScoreCap(week);
+          const willHad = week.games.some((g) => pickFor(picks, "will", g.id));
+          const saraHad = week.games.some((g) => pickFor(picks, "sara", g.id));
+          const missed = (state === "final" || state === "locked") && !willHad && !saraHad;
+          const fill = (n: number) => (cap <= 0 ? 0 : Math.min(100, (n / cap) * 100));
           return (
             <Link key={week.id} href={`/weeks/${week.id}`} className="block min-h-14">
               <Card className="border-white/10 bg-black/40 p-4 transition hover:border-amber-400/40">
@@ -36,25 +40,33 @@ export default function WeeksPage() {
                 </div>
                 <p className="mt-2 text-sm text-zinc-400">
                   {week.games.length} games
-                  {missed
-                    ? " · missed — no card, score unchanged"
-                    : ` · your ${pts.total} pts`}
-                  {pts.bonus ? ` including +${pts.bonus} perfect-week bonus` : ""}
+                  {missed ? " · missed — no card, score unchanged" : null}
+                  {willPts.bonus || saraPts.bonus ? " · perfect-week bonus is in the total" : null}
                 </p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full bg-amber-400"
-                    style={{ width: `${(week.id / seasonWeeks) * 100}%` }}
-                  />
+                <p className="mt-2 text-sm">
+                  <span className="text-amber-200">Will {willPts.total}</span>
+                  <span className="text-zinc-500"> · </span>
+                  <span className="text-cyan-200">Sara {saraPts.total}</span>
+                </p>
+                <div className="mt-3 space-y-1.5">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full bg-amber-400" style={{ width: `${fill(willPts.total)}%` }} />
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full bg-cyan-400" style={{ width: `${fill(saraPts.total)}%` }} />
+                  </div>
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Season progress through week {week.id} of {seasonWeeks}
+                  {cap === 0
+                    ? "No finals yet — the bar stays empty."
+                    : `${willPts.gamesFinal} final${willPts.gamesFinal === 1 ? "" : "s"} · ${cap} pts on the table`}
                 </p>
               </Card>
             </Link>
           );
         })}
       </div>
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

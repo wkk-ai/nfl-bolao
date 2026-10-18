@@ -87,6 +87,7 @@ export default function LeaderboardPage() {
           </tbody>
         </table>
       </Card>
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

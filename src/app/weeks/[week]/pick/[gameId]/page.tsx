@@ -62,6 +62,7 @@ export default function PickPage({
           {formatLockedAt(game.kickoff)}. You cannot change a pick after the ball is in the air.
         </p>
         <ButtonLink href={`/weeks/${weekId}`}>Back to matchups</ButtonLink>
+        <div className="h-24 md:hidden" aria-hidden />
       </div>
     );
   }
@@ -160,7 +161,7 @@ export default function PickPage({
           Choose a winner to unlock the margin buckets.
         </Card>
       )}
-      <div className="flex flex-col gap-2 pb-16 md:flex-row md:flex-wrap md:pb-0">
+      <div className="flex flex-col gap-2 pb-28 md:flex-row md:flex-wrap md:pb-0">
         <Button
           disabled={!winner || !bucket || saving !== null}
           className="h-12 min-h-12 w-full bg-amber-400 text-black hover:bg-amber-300 md:w-auto"

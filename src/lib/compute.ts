@@ -95,6 +95,13 @@ export function weekPoints(
   return { gamePts, bonus, total: gamePts + bonus, winnersHit, gamesFinal };
 }
 
+export function weekScoreCap(week: SeedWeek): number {
+  const finals = week.games.filter((g) => g.status === "final").length;
+  if (finals === 0) return 0;
+  const allFinal = finals === week.games.length;
+  return finals * 5 + (allFinal ? PERFECT_WEEK_BONUS : 0);
+}
+
 export function seasonTotals(weeks: SeedWeek[], picks: PickRecord[]) {
   const byPlayer: Record<PlayerId, { total: number; byWeek: { weekId: number; pts: number }[] }> = {
     will: { total: STARTING_POINTS, byWeek: [] },

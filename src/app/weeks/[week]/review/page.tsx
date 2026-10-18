@@ -48,7 +48,7 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
       ) : (
         <EmptyState title="Card looks full" body="Kickoff still owns the lock. Change an open pick from the matchup if you need to." />
       )}
-      <div className="space-y-2 pb-16 md:pb-0">
+      <div className="space-y-2">
         {rows.map(({ game, pick, locked }) => (
           <Card
             key={game.id}
@@ -98,7 +98,7 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
           </Card>
         ))}
       </div>
-      <div className="h-12 md:hidden" aria-hidden />
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }

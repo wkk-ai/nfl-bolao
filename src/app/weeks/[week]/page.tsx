@@ -74,7 +74,7 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           ))}
         </div>
       ) : null}
-      <div className="grid gap-3 pb-16 md:pb-0">
+      <div className="grid gap-3">
         {games.map((g) => (
           <GameCard
             key={g.id}
@@ -85,7 +85,9 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           />
         ))}
       </div>
+      <div className="h-28 md:hidden" aria-hidden />
       <ReactionBar weekId={weekId} from={activePlayer} />
+      <div className="h-32 md:hidden" aria-hidden />
     </div>
   );
 }
