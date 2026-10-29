@@ -26,6 +26,7 @@ export type SeedGame = {
   margin: number | null;
   marginBucket: MarginBucket | null;
   venue: string | null;
+  scoresPublic?: boolean;
 };
 
 export type SeedWeek = {

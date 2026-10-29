@@ -6,6 +6,7 @@ import type {
   SeedWeek,
 } from "./types";
 import { PERFECT_WEEK_BONUS, STARTING_POINTS, scorePick } from "./scoring";
+import { canEditPick, revealReady } from "./reveal";
 import { deriveWeekState, gameLocked } from "./week-state";
 import { teamLabel } from "./teams";
 
@@ -51,6 +52,7 @@ function pickVisibleTo(
 ): PickRecord | undefined {
   if (owner === viewer) return pickFor(picks, owner, game.id);
   if (!gameLocked(game, now)) return undefined;
+  if (!game.scoresPublic && !revealReady(picks, game.id)) return undefined;
   return pickFor(picks, owner, game.id);
 }
 
@@ -62,7 +64,7 @@ export function weekGames(
 ): GameView[] {
   return week.games.map((g) => ({
     ...g,
-    locked: gameLocked(g, now),
+    locked: !canEditPick(g, picks, viewer, now),
     willPick: pickVisibleTo(picks, "will", g, viewer, now),
     saraPick: pickVisibleTo(picks, "sara", g, viewer, now),
   }));
@@ -140,9 +142,8 @@ export function unpickedOpenGames(
   now = new Date(),
 ): SeedGame[] {
   return week.games.filter((g) => {
-    if (gameLocked(g, now)) return false;
-    const p = pickFor(picks, playerId, g.id);
-    return !p;
+    if (!canEditPick(g, picks, playerId, now)) return false;
+    return !pickFor(picks, playerId, g.id);
   });
 }
 

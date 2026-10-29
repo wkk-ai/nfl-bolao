@@ -56,7 +56,9 @@ export default function HomePage() {
           <p className="font-medium text-amber-100">
             {missing.length} game{missing.length === 1 ? "" : "s"} still unpicked this week.
           </p>
-          <p className="mt-1 text-sm text-amber-100/80">Kickoff lock is real. Miss it and it’s a zero.</p>
+          <p className="mt-1 text-sm text-amber-100/80">
+            You can still pick after kickoff. The score stays hidden until you both pick.
+          </p>
           <ButtonLink href={`/weeks/${week.id}`} className="mt-3 w-full bg-amber-400 text-black hover:bg-amber-300 sm:w-auto">
             Pick Week {week.id}
           </ButtonLink>

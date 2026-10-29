@@ -35,7 +35,11 @@ export default function HistoryPage() {
               </div>
               {awards[0] ? <p className="mt-2 text-sm text-zinc-400">{awards[0].detail}</p> : null}
               {will.total === 0 && sara.total === 0 ? (
-                <p className="mt-2 text-sm text-zinc-400">Neither had a card. Season score unchanged.</p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  {picks.some((p) => p.weekId === w.id)
+                    ? "Scores stay hidden until you both pick."
+                    : "Neither had a card. Season score unchanged."}
+                </p>
               ) : null}
               <Link href={`/weeks/${w.id}/results`} className="mt-2 inline-block text-sm text-amber-200">
                 Open reveal →

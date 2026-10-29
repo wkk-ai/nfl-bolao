@@ -16,7 +16,8 @@ export default function RulesPage() {
       <Card className="border-white/10 bg-black/40 p-5 space-y-3 text-sm leading-6 text-zinc-300">
         <p>
           Will and Sara both start at 100. They missed the early weeks, so those games add nothing and take nothing. New
-          picks stack on top of 100. A blank after kickoff is still a zero for that game, not a deduction from 100.
+          picks stack on top of 100. Games that already ended stay on the board. From now on, a blank game waits. It is
+          not a zero, and it does not move the 100, until the score is allowed out.
         </p>
         <p>
           Each NFL game gets one winner pick and one winning-margin bucket: 5, 10, 15, or 20. Those are not exact scores.
@@ -39,15 +40,19 @@ export default function RulesPage() {
           (one bucket off). Pick the other team: nothing.
         </p>
         <p>
-          The +10 perfect-week bonus only lands when every game that week is final and every winner was right. A blank, a
-          miss, or a tie (no winner) kills the bonus. Margin misses do not.
+          The +10 perfect-week bonus lands only when every game that week is on the board and every winner was right. A
+          game still waiting on a pick does not count yet. A miss or a tie kills the bonus. Margin misses do not.
         </p>
         <h2 className="text-xl font-medium text-amber-200">Locks</h2>
         <p>
-          Saving a pick is final right away. There is no extra submit step. You can still change that pick until kickoff.
-          Each game locks at its own kickoff, in the database, not just on the screen. After kickoff, picks cannot be added
-          or changed. You can still pick later games in the same week. A blank after lock is a zero for that game. The other
-          chair’s pick stays hidden until that game kicks off.
+          Saving a pick counts right away. There is no extra submit step. You can change that pick until kickoff. After
+          kickoff, a saved pick stays. If you have not picked yet, you can still add one after kickoff, including Thursday
+          night, because you watch the game late. That late pick cannot be changed.
+        </p>
+        <p>
+          The real score stays hidden until both Will and Sara have a pick for that game. Points for that game are added
+          only then. Games that were already over when this rule started keep their scores, and those missed games stay
+          closed. The other chair’s pick stays hidden until kickoff, and until you have picked too.
         </p>
         <h2 className="text-xl font-medium text-amber-200">Ties</h2>
         <p>

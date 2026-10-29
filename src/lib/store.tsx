@@ -23,6 +23,7 @@ import {
   type ReactionRow,
   type WeekRow,
 } from "./remote";
+import { concealWeeks } from "./reveal";
 import type { MarginBucket, PickRecord, PlayerId, Reaction, SeedWeek } from "./types";
 
 const PLAYER_KEY = "bolao-nfl-2026-player";
@@ -51,7 +52,13 @@ type StoreValue = {
 
 const Ctx = createContext<StoreValue | null>(null);
 
-const seedWeeks = seed.weeks as SeedWeek[];
+const seedWeeks = (seed.weeks as SeedWeek[]).map((week) => ({
+  ...week,
+  games: week.games.map((game) => ({
+    ...game,
+    scoresPublic: game.scoresPublic ?? game.status === "final",
+  })),
+}));
 const seedPicks = seed.picks as PickRecord[];
 const seedReactions = seed.reactions as Reaction[];
 
@@ -75,7 +82,7 @@ function rpcMessage(err: { message?: string } | null): string {
 
 function writeErrorMessage(err: { message?: string } | null): string {
   const msg = rpcMessage(err);
-  if (msg.includes("kickoff_lock")) return "Kickoff already hit. That pick was not saved.";
+  if (msg.includes("kickoff_lock")) return "That pick is already saved, and the game has started, so it stays.";
   return "Could not save that pick.";
 }
 
@@ -92,9 +99,7 @@ async function loadBoard(player: PlayerId) {
   if (!sb) return null;
   const [weeksRes, gamesRes, picksRes, reactionsRes] = await Promise.all([
     sb.from("weeks").select("id,season,label,state").order("id"),
-    sb.from("games").select(
-      "id,week_id,kickoff,home_abbr,away_abbr,home_name,away_name,home_score,away_score,status,winner_abbr,margin,margin_bucket,venue",
-    ),
+    sb.rpc("visible_games"),
     sb.rpc("visible_picks", { p_player: player }),
     sb.from("reactions").select("id,from_player_id,to_player_id,week_id,emoji,body").order("created_at"),
   ]);
@@ -186,22 +191,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!configured || !unlocked) return;
-    const sb = getSupabase();
-    if (!sb) return;
-    let cancelled = false;
-    const channel = sb
-      .channel("bolao-scores")
-      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
-        if (!cancelled) void refresh();
-      })
-      .subscribe();
     const poll = window.setInterval(() => {
-      if (!cancelled) void refresh();
+      void refresh();
     }, 15000);
     return () => {
-      cancelled = true;
       window.clearInterval(poll);
-      void sb.removeChannel(channel);
     };
   }, [configured, refresh, unlocked]);
 
@@ -293,6 +287,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [activePlayer],
   );
 
+  const visibleWeeks = useMemo(() => concealWeeks(weeks, picks), [weeks, picks]);
+
   const value = useMemo<StoreValue>(
     () => ({
       ready: client && hydrated && unlocked,
@@ -300,7 +296,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       error,
       activePlayer,
       setActivePlayer,
-      weeks,
+      weeks: visibleWeeks,
       picks,
       reactions,
       scoresUpdatedAt,
@@ -314,7 +310,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       configured,
       error,
       activePlayer,
-      weeks,
+      visibleWeeks,
       picks,
       reactions,
       scoresUpdatedAt,

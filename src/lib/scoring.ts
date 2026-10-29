@@ -56,6 +56,7 @@ export function bucketIndex(bucket: MarginBucket): number {
 
 export function scorePick(pick: PickRecord | undefined, game: SeedGame): PickScore | null {
   if (game.status !== "final") return null;
+  if (game.homeScore == null || game.awayScore == null) return null;
   const zero: PickScore = {
     winnerPts: 0,
     marginPts: 0,

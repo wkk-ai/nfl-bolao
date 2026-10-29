@@ -7,6 +7,7 @@ import { ReactionBar } from "@/components/reaction-bar";
 import { EmptyState, ErrorState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { unpickedOpenGames, weekGames, weekPoints, weeklyAwards } from "@/lib/compute";
+import { isKickoffLocked } from "@/lib/scoring";
 import { deriveWeekState, weekStateLabel } from "@/lib/week-state";
 import { useScrollToGame } from "@/lib/focus-game";
 
@@ -31,7 +32,8 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
           <p className="text-xs font-medium text-zinc-500">{weekStateLabel(state)}</p>
           <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{week.label} matchups</h1>
           <p className="text-zinc-400">
-            Pick the winner, then how far they win. Lock hits at kickoff, not at your bedtime.
+            Pick the winner, then how far they win. You can still add a pick after kickoff. The score stays hidden
+            until both of you have picked.
           </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
@@ -47,6 +49,11 @@ export default function WeekMatchupsPage({ params }: { params: Promise<{ week: s
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm">
           {missing.length} still blank. Start with any open game.
         </p>
+      ) : week.games.some((g) => !g.scoresPublic && g.status !== "final" && isKickoffLocked(g.kickoff)) ? (
+        <EmptyState
+          title="Card is full"
+          body="Scores stay hidden until both of you have picked. Points are added then."
+        />
       ) : state === "final" || state === "locked" ? (
         <EmptyState
           title={pts.total === 0 ? "No card this week" : "Nothing left open"}

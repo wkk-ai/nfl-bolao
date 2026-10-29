@@ -10,6 +10,7 @@ import { ErrorState, PageLoading } from "@/components/states";
 import { useStore } from "@/lib/store";
 import { bucketCopy, bucketRange, MARGIN_BUCKETS } from "@/lib/scoring";
 import { gameLocked } from "@/lib/week-state";
+import { canEditPick } from "@/lib/reveal";
 import { formatKickoff, formatLockedAt } from "@/lib/format";
 import { nextOpenGame, pickFor, weekListHref } from "@/lib/compute";
 import type { MarginBucket } from "@/lib/types";
@@ -40,7 +41,9 @@ export default function PickPage({
     setBucket((b) => b ?? existing.marginBucket);
   }, [existing]);
 
-  const locked = game ? gameLocked(game) : true;
+  const started = game ? gameLocked(game) : true;
+  const editable = game ? canEditPick(game, picks, activePlayer) : false;
+  const late = Boolean(game && started && !existing);
   const step = winner ? 2 : 1;
 
   const teams = useMemo(() => {
@@ -54,7 +57,7 @@ export default function PickPage({
   if (!ready) return <PageLoading />;
   if (!week || !game) return <ErrorState title="Game missing" body="That matchup is not on this week’s card." />;
 
-  if (locked) {
+  if (!editable) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">This game is locked</h1>
@@ -88,7 +91,9 @@ export default function PickPage({
     <div className="space-y-6">
       <div>
         <p className="text-xs font-medium text-zinc-500">
-          Step {step} of 2 · locks {formatKickoff(game.kickoff)}
+          {late
+            ? "Kickoff has passed. The score stays hidden. This save is final."
+            : `Step ${step} of 2 · locks ${formatKickoff(game.kickoff)}`}
         </p>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">Make the call</h1>
         <p className="text-zinc-400">First the winner. Then how ugly you think the score gets.</p>
@@ -178,8 +183,9 @@ export default function PickPage({
           {saving === "next" ? "Saving…" : "Save and next"}
         </Button>
         <p className="w-full text-sm text-zinc-400">
-          Save pick writes this call now. Save and next jumps to the next blank game. You can still change it until
-          the lock.
+          {late
+            ? "The score stays off this page until you and the other chair have both picked. You cannot change this pick after saving."
+            : "Save pick writes this call now. Save and next jumps to the next blank game. You can still change it until kickoff."}
         </p>
         {saveError ? <p className="w-full text-sm text-red-300">{saveError}</p> : null}
         <ButtonLink href={weekListHref(weekId, game.id)} variant="ghost" className="h-12 min-h-12 w-full md:w-auto">

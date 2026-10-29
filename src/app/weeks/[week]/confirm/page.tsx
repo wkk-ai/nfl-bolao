@@ -24,8 +24,8 @@ export default function ConfirmPage({ params }: { params: Promise<{ week: string
       <p className="text-xs font-medium text-emerald-400">Saved</p>
       <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">{name}’s card</h1>
       <p className="text-zinc-300">
-        {yours.length} saved pick{yours.length === 1 ? "" : "s"} on {week.label}. Every save already counts. Open games
-        can still be edited until kickoff.
+        {yours.length} saved pick{yours.length === 1 ? "" : "s"} on {week.label}. Every save already counts. You can
+        change a pick until kickoff. A pick made after kickoff stays.
       </p>
       <Card className="border-white/10 bg-black/40 p-4 text-sm">
         <ul className="space-y-2">

@@ -10,6 +10,7 @@ import { useStore } from "@/lib/store";
 import { gameAnchorId, pickFor } from "@/lib/compute";
 import { useScrollToGame } from "@/lib/focus-game";
 import { bucketRange } from "@/lib/scoring";
+import { canEditPick } from "@/lib/reveal";
 import { gameLocked } from "@/lib/week-state";
 import { formatLockedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
   const rows = week.games.map((g) => ({
     game: g,
     pick: pickFor(picks, activePlayer, g.id),
-    locked: gameLocked(g),
+    locked: gameLocked(g) && !canEditPick(g, picks, activePlayer),
   }));
   const openMissing = rows.filter((r) => !r.locked && !r.pick);
   const saved = rows.filter((r) => r.pick).length;
@@ -37,13 +38,13 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
       <div>
         <h1 className="text-2xl font-medium text-amber-200 sm:text-3xl">My card · {week.label}</h1>
         <p className="text-zinc-400">
-          {name} has {saved} saved pick{saved === 1 ? "" : "s"} this week. Every save already counts. Open games can
-          still be changed until kickoff.
+          {name} has {saved} saved pick{saved === 1 ? "" : "s"} this week. Every save already counts. You can change a
+          pick until kickoff. If kickoff has passed and you have not picked, you can still add one.
         </p>
       </div>
       {openMissing.length > 0 ? (
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm">
-          {openMissing.length} still empty. A blank after kickoff is a zero.
+          {openMissing.length} still empty. The score stays hidden until you both pick.
         </p>
       ) : (
         <EmptyState title="Card looks full" body="Kickoff still owns the lock. Change an open pick from the matchup if you need to." />
@@ -80,7 +81,7 @@ export default function ReviewPage({ params }: { params: Promise<{ week: string 
                   {pick
                     ? `${pick.winnerAbbr} · ${bucketRange(pick.marginBucket)}`
                     : locked
-                      ? "Missed — locked with no pick"
+                      ? "Missed"
                       : "No pick yet"}
                 </div>
               </div>

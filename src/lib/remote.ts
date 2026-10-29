@@ -22,6 +22,7 @@ export type GameRow = {
   margin: number | null;
   margin_bucket: SeedGame["marginBucket"];
   venue: string | null;
+  scores_public?: boolean | null;
 };
 
 export type PickRow = {
@@ -57,6 +58,7 @@ export function mapGame(row: GameRow): SeedGame {
     margin: row.margin,
     marginBucket: row.margin_bucket,
     venue: row.venue,
+    scoresPublic: row.scores_public === true,
   };
 }
 
